@@ -1,0 +1,87 @@
+{% extends 'settings.html' %}
+{% block content %}
+<style>
+    input {
+        background-color: #eee;
+        border: none;
+        padding: 12px 15px;
+        margin: 8px 0;
+        width: 200px;
+        color: rgb(21, 9, 9);
+    }
+    i {
+        margin: 15px;
+    }
+    button {
+        background: none;
+        border: none;
+    }
+    button:hover{
+        cursor: pointer;
+    }
+    input:disabled{
+        color: rgb(107, 107, 107);
+    }
+    .button-21 {
+        align-items: center;
+        appearance: none;
+        background-color: #c69bfd;
+        background-image: linear-gradient(1deg, #7e41fc, #8878fc 99%);
+        background-size: calc(100% + 20px) calc(100% + 20px);
+        border-radius: 100px;
+        border-width: 0;
+        box-shadow: none;
+        box-sizing: border-box;
+        color: #FFFFFF;
+        cursor: pointer;
+        display: inline-flex;
+        font-family: CircularStd, sans-serif;
+        font-size: 1rem;
+        height: auto;
+        justify-content: center;
+        line-height: 1.5;
+        padding: 6px 20px;
+        position: relative;
+        text-align: center;
+        text-decoration: none;
+        transition: background-color .2s, background-position .2s;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        vertical-align: top;
+        white-space: nowrap;
+    }
+    .button-21:active,
+    .button-21:focus {
+        outline: none;
+    }
+    .button-21:hover {
+        background-position: -20px -20px;
+    }
+    .button-21:focus:not(:active) {
+        box-shadow: rgba(40, 170, 255, 0.25) 0 0 0 .125em;
+    }
+    .fa-ban{
+        position: absolute;
+        transform: translateX(-45px);
+    }
+</style>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input name="username" type="text" id="username" value="{{ username }}"/>
+    <br><input name="first_name" type="text" id="first_name" value="{{ first_name }}"/>
+    <br><input name="last_name" type="text" id="last_name" value="{{ last_name }}"/>
+    <br><input name="email" type="email" id="email" value="{{ email }}"/>
+    <br><input name="date_of_birth" type="date" id="date_of_birth" value="{{ date_of_birth }}">
+    <br><img id="image" src="http://127.0.0.1:8000/files/{{ profile_picture.name }}"> <button id="but"><i class="fa-solid fa-pencil"></i></button>
+    <input name="profile_picture" style="display: none;" type="file" id="profile_picture" accept=".png, .jpeg, .jpg, .ico, .svg" required>
+    <br><button class="button-21" role="button" type="submit">Save changes</button>
+</form>
+
+<script>
+    document.getElementById("but").addEventListener("click", function(event){
+        event.preventDefault();
+        document.getElementById("profile_picture").click(); // Имитация клика по input
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {{ psihologyst.username }} <br>
+    {{ psihologyst.first_name }} <br>
+    {{ psihologyst.last_name }} <br>
+    {{ psihologyst.email }} <br>
+
+    {{ psihologyst_inf.degree }} <br>
+    {{ psihologyst_inf.universyty }} <br>
+    <img src="http://127.0.0.1:8000/files/{{ psihologyst_inf.diploma.name }}"> <br>
+    {{ psihologyst_inf.training }} <br>
+    {{ psihologyst_inf.advanced_curses }} <br>
+    {{ psihologyst_inf.description }} <br>
+    {{ psihologyst_inf.science_interestings }} <br>
+    {{ psihologyst_inf.achievements }} <br>
+    {{ psihologyst_inf.work_area }} <br>
+    {{ psihologyst_inf.often_questions }} <br>
+    {{ psihologyst_inf.experience }} <br>
+    {{ psihologyst_inf.something_to_add }} <br>
+
+    <img src="http://127.0.0.1:8000/files/{{ user_inf.profile_picture.name }}"> <br>
+    {{ user_inf.date_of_birth }}
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit">Login</button>
+    </form>
+</body>
+</html> -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/login-reg.css' %}">
+    <title>Sign-in/Sign-up</title>
+</head>
+<body>
+    <script>
+
+    </script>
+    <div class="container" id="container">
+        <script>
+            var formType = ''
+            const jsonData = localStorage.getItem('myStorage');
+            const container = document.getElementById('container');
+
+            if (jsonData != null){
+                formType = JSON.parse(jsonData)["type"];
+                console.log(formType)
+                if (formType === "sign-up"){
+                    container.classList.add("right-panel-active");
+                };
+            };
+
+        </script>
+        <div class="form-container sign-up-container">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <h1>Create Account</h1>
+                <!-- <div class="social-container">
+                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+                </div> -->
+                <!-- <span>or use your email for registration</span> -->
+                <input name="username" type="text" placeholder="Username" required />
+                <input name="first_name" type="text" placeholder="First name" required />
+                <input name="last_name" type="text" placeholder="Last name" required />
+                <input name="email" type="email" placeholder="Email" required/>
+                <input name="password" type="password" placeholder="Password" required/>
+                <select name="specialyty" name="specialyty">
+                    <option value="regular user">
+                        Regular user
+                    </option>
+                    <option value="psihologyst">
+                        Psihologyst
+                    </option>
+                </select>
+                <input name="date_of_birth" type="date" placeholder="{{ date }}" required>
+                <input name="profile_picture" type="file" id="file-upload" accept=".png, .jpeg, .jpg, .ico, .svg" required>
+                <button type="submit">Sign Up</button>
+            </form>
+        </div>
+        <div class="form-container sign-in-container">
+            <form method="post">
+                {% csrf_token %}
+                <h1>Sign in</h1>
+                <!-- <div class="social-container">
+                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+                </div>
+                <span>or use your account</span> -->
+                <input name="username" type="text" placeholder="Username"  required/>
+                <input name="password" type="password" placeholder="Password"  required/>
+                <a href="#">Forgot your password?</a>
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>Welcome Back!</h1>
+                    <p>To keep connected with us please login with your personal info</p>
+                    <button class="ghost" id="signIn">Sign In</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1>Hello, Friend!</h1>
+                    <p>Enter your personal details and start journey with us</p>
+                    <button class="ghost" id="signUp">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const signUpButton = document.getElementById('signUp');
+        const signInButton = document.getElementById('signIn');
+        signUpButton.addEventListener('click', () => {
+	        container.classList.add("right-panel-active");
+            formType = {"type": "sign-up"};
+            console.log(formType);
+            localStorage.setItem('myStorage', JSON.stringify(formType));
+        });
+
+        signInButton.addEventListener('click', () => {
+	        container.classList.remove("right-panel-active");
+            formType = {"type":"sign-in"};
+            console.log(formType);
+            localStorage.setItem('myStorage', JSON.stringify(formType)); 
+        });
+    </script>
+</body>
+</html>
