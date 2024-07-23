@@ -1,0 +1,66 @@
+{% extends 'settings.html' %}
+{% block content %}
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <select name="degree">
+        {% if 'degree=="bachelor"' %}
+        <option value="bachelor" selected="selected">Бакалавр</option>
+        <option value="specialist">Специалист</option>
+        <option value="master">Магистр</option>
+        {% elif 'degree=="specialist"' %}
+        <option value="bachelor">Бакалавр</option>
+        <option value="specialist" selected="selected">Специалист</option>
+        <option value="master">Магистр</option>
+        {% else %}
+        <option value="bachelor" selected="selected">Бакалавр</option>
+        <option value="specialist">Специалист</option>
+        <option value="master">Магистр</option>
+        {% endif %}
+    </select>
+    <input name="universyty" type="text" value="{{ universyty }}">
+    <img src="https://localhost:8000/files/{{ diploma.name }}">
+    <input name="diploma" type="file">
+    <input name="training" type="text" value="{{ training }}">
+    <input name="advanced_curses" type="text" value="{{ advanced_curses }}">
+    <input name="description" type="text" value="{{ description }}">
+    <input name="science_interestings" type="text" value="{{ science_interestings }}">
+    <input name="achievements" type="text" value="{{ achievements }}">
+    <input name="work_area" type="text" value="{{ work_area }}">
+    <input name="often_questions" type="text" value="{{ often_questions }}">
+    <select name="experience" >
+        {% if 'experience=="1"' %}
+        <option value="1" selected="selected">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5+">5+</option>
+        {% elif 'experience=="2"' %}
+        <option value="1">1</option>
+        <option value="2" selected="selected">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5+">5+</option>
+        {% elif 'experience=="3"' %}
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3" selected="selected">3</option>
+        <option value="4">4</option>
+        <option value="5+">5+</option>
+        {% elif 'experience=="4"' %}
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4" selected="selected">4</option>
+        <option value="5+">5+</option>
+        {% elif 'experience=="5+"' %}
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5+" selected="selected">5+</option>
+        {% endif %}
+    </select>
+    <input name="something_to_add" type="text" value="{{ something_to_add }}">
+    <button type="submit">Save changes</button>
+</form>
+{% endblock %}

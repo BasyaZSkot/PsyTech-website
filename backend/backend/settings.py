@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'main_page',
     'psihologist_page',
     'registration_page',
-    'chat'
+    'chat',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [

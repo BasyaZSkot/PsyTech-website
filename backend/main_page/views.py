@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from chat.models import Message
 from django.db.models import Q
 from django.contrib.auth import authenticate, login
+from django.http import HttpResponseRedirect
 
 
 def group_validation(user_object, group_name):
@@ -146,7 +147,6 @@ def settings(request):
 def user_information(request):
     user = request.user
     if request.method == "POST":
-        print(request.POST)
         user.username = request.POST.get("username")
         user.first_name = request.POST.get("first_name")
         user.last_name = request.POST.get("last_name")
@@ -154,9 +154,9 @@ def user_information(request):
         user.save()
         user_info = UserInformation.objects.get(user=user)
         user_information.date_of_birth = request.POST.get("date_of_birth")
-        user_info.profile_picture = request.POST.get("profile_picture")
+        user_info.profile_picture = request.FILES.get("profile_picture")
         user_info.save()
-        return redirect("home")
+        return HttpResponseRedirect(request.path_info)
 
     username = user.username
     email = user.email
@@ -190,7 +190,48 @@ def user_information(request):
                                                                       "date_of_birth": date_of_birth})
 
 def summary_settings(request):
-    pass
+    summary = Summary.objects.get(user=request.user)
+    if request.method == "POST":
+        summary.degree = request.POST.get("degree")
+        summary.universyty = request.POST.get("universyty")
+        if request.FILES.get("diploma") != None:
+            summary.diploma = request.FILES.get("diploma")
+        summary.training = request.POST.get("training")
+        summary.advanced_curses = request.POST.get("advanced_curses")
+        summary.description = request.POST.get("description")
+        summary.science_interestings = request.POST.get("science_interestings")
+        summary.achievements = request.POST.get("achievements")
+        summary.work_area = request.POST.get("work_area")
+        summary.often_questions = request.POST.get("often_questions")
+        summary.experience = request.POST.get("experience")
+        summary.something_to_add = request.POST.get("something_to_add")
+        summary.save()
+        return redirect("home")
+    degree = summary.degree
+    universyty = summary.universyty
+    diploma = summary.diploma
+    training = summary.training
+    advanced_curses = summary.advanced_curses
+    description = summary.description
+    science_interestings = summary.science_interestings
+    achievements = summary.achievements
+    work_area = summary.work_area
+    often_questions = summary.often_questions
+    experience = summary.experience
+    something_to_add = summary.something_to_add
+    return render(request, "summary_set.html", context={"degree": degree,
+                                                     "universyty": universyty,
+                                                     "diploma": diploma,
+                                                     "training": training,
+                                                     "advanced_curses": advanced_curses,
+                                                     "description": description,
+                                                     "science_interestings": science_interestings,
+                                                     "achievements": achievements,
+                                                     "work_area": work_area,
+                                                     "often_questions": often_questions,
+                                                     "experience": experience,
+                                                     "something_to_add": something_to_add,
+                                                    })
 
 def change_password(request):
     username = request.user.username

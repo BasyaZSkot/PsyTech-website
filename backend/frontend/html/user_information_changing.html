@@ -73,7 +73,7 @@
     <br><input name="last_name" type="text" id="last_name" value="{{ last_name }}"/>
     <br><input name="email" type="email" id="email" value="{{ email }}"/>
     <br><input name="date_of_birth" type="date" id="date_of_birth" value="{{ date_of_birth }}">
-    <br><img id="image" src="http://127.0.0.1:8000/files/{{ profile_picture.name }}"> <button id="but"><i class="fa-solid fa-pencil"></i></button>
+    <br><img width="100px" height="100px" style="border-radius: 100px; border: 5px  #eee; " id="image" src="http://127.0.0.1:8000/files/{{ profile_picture.name }}"> <button id="but"><i class="fa-solid fa-pencil"></i></button>
     <input name="profile_picture" style="display: none;" type="file" id="profile_picture" accept=".png, .jpeg, .jpg, .ico, .svg" required>
     <br><button class="button-21" role="button" type="submit">Save changes</button>
 </form>
