@@ -21,4 +21,5 @@ urlpatterns = [
     path('', views.reg, name='reg'),
     path("logout/", views.logout_func, name="logout"),
     path("additionaly/", views.additionaly, name="additionaly"),
+    path("email-verification/<int:user_id>/", views.email_verification, name="email-verification"),
 ]
