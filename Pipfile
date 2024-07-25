@@ -9,6 +9,10 @@ pillow = "*"
 django-extensions = "*"
 werkzeug = "*"
 pyopenssl = "*"
+requests = "*"
+pyjwt = "*"
+django-allauth = {extras = ["socialaccount"], version = "*"}
+django-cors-headers = "*"
 
 [dev-packages]
 
