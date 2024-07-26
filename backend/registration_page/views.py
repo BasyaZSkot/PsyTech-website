@@ -9,11 +9,24 @@ from django.template.loader import render_to_string
 import random
 import string
 from .models import EmailConfirmation
-from .forms import EmailConfirmationForm
+from .forms import EmailConfirmationForm, CustomSignupForm
 import calendar
+from allauth.account.views import SignupView, LoginView
 
+class CustomSignupView(SignupView):
+    template_name = 'sign_up_social.html'
+    form_class = CustomSignupForm
+
+    def form_valid(self, form):
+        user = form.save(self.request)
+        print(form(self.request))
+        # form.clean()
+        # user = User.objects.create_user()
+        
+        return redirect(self.get_success_url())
 
 def reg(request):
+    SignupView.template_name = "sign_up_social.html"
     if request.method == 'POST':
         username = request.POST.get("username")
         password = request.POST.get("password")

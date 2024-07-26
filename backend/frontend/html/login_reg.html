@@ -1,17 +1,3 @@
-<!-- <!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-</head>
-<body>
-    <h2>Login</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form }}
-        <button type="submit">Login</button>
-    </form>
-</body>
-</html> -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -44,10 +30,10 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <h1>Create Account</h1>
-                <!-- <div class="social-container">
-                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
-                </div> -->
-                <!-- <span>or use your email for registration</span> -->
+                <div class="social-container">
+                    <a style="background: none; border: none;" href="/accounts/signup" class="social"><img src="{% static 'google_icon-icons.com_62736.svg' %}"></a>
+                </div>
+                <span>or use your email for registration</span>
                 <input name="username" type="text" placeholder="Username" required />
                 <input name="first_name" type="text" placeholder="First name" required />
                 <input name="last_name" type="text" placeholder="Last name" required />

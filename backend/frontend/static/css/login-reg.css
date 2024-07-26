@@ -3,7 +3,6 @@
 * {
 	box-sizing: border-box;
 }
-
 body {
 	background: #f6f5f7;
 	display: flex;
@@ -32,9 +31,9 @@ p {
 	margin: 20px 0 30px;
 }
 
-/* span {
+span {
 	font-size: 12px;
-} */
+}
 
 a {
 	color: #333;

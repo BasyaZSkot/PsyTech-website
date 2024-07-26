@@ -37,6 +37,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 MEDIA_ROOT = os.path.join(BASE_DIR, 'frontend/files')
 MEDIA_URL = '/files/'
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,12 +47,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'client_page',
     'main_page',
     'psihologist_page',
     'registration_page',
     'chat',
-    'django_extensions'
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.vk',
+    'allauth.socialaccount.providers.yandex',
 ]
 
 MIDDLEWARE = [
@@ -62,6 +68,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    #allauth
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -80,6 +88,12 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
@@ -139,3 +153,5 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+ACCOUNT_FORMS = {'signup': 'registration_page.forms.CustomSignupForm'}
+ACCOUNT_TEMPLATES = {'signup': 'sign_up_social.html'}

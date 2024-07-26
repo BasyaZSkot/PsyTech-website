@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,18 +28,9 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <h1>Create Account</h1>
-                <input name="username" type="text" placeholder="Username" required />
-                <input name="password" type="password" placeholder="Password" required/>
-                <select name="specialyty" name="specialyty">
-                    <option value="regular user">
-                        Regular user
-                    </option>
-                    <option value="psihologyst">
-                        Psihologyst
-                    </option>
-                </select>
-                <input name="date_of_birth" type="date" placeholder="{{ date }}" required>
-                <input name="profile_picture" type="file" id="file-upload" accept=".png, .jpeg, .jpg, .ico, .svg" required>
+                {% for f in form %}
+                {{ f }}
+                {% endfor %}
                 <button type="submit">Sign Up</button>
             </form>
         </div>
