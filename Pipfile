@@ -4,15 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "*"
 pillow = "*"
 django-extensions = "*"
 werkzeug = "*"
 pyopenssl = "*"
 requests = "*"
 pyjwt = "*"
-django-allauth = {extras = ["socialaccount"], version = "*"}
+django-allauth = "*"
 django-cors-headers = "*"
+django = "*"
 
 [dev-packages]
 
