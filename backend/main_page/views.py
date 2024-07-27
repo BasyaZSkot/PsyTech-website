@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from registration_page.models import UserInformation
+from .models import UserInformation
 from psihologist_page.models import Summary
 import copy
 from .models import SystemMessages
@@ -8,6 +8,9 @@ from chat.models import Message
 from django.db.models import Q
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
+from django.contrib.sites.models import Site
+from .forms import UserInformationForm
+from django.contrib.auth.models import Group
 
 
 def group_validation(user_object, group_name):
@@ -17,6 +20,7 @@ def group_validation(user_object, group_name):
         return False
 
 def home_page(request):
+    print(Site)
     notifications = {'summaries': [],
                      'meeting_messages': [],
                      'user_group': '',
@@ -245,3 +249,24 @@ def change_password(request):
         login(request, user)
         return redirect("settings")
     return render(request, "change_password.html")
+
+def additionaly(request):
+    if request.method == "POST":
+        form = UserInformationForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.clean()
+            specialyty = form.cleaned_data["specialyty"]
+            form = form.save(commit=False)
+            form.user = request.user
+            print(specialyty == "regular user")
+            form.save()
+            my_group = Group.objects.get(name=specialyty) 
+            my_group.user_set.add(request.user)
+
+            if specialyty == "regular user":
+                return redirect("home")
+            elif specialyty == "psihologist":
+                return redirect("filling_summary")
+    else:
+        form = UserInformationForm
+    return render(request, "additionaly.html", context={'form': form})

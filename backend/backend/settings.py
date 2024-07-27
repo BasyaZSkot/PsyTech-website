@@ -39,7 +39,7 @@ MEDIA_URL = '/files/'
 
 
 # Application definition
-
+SITE_ID = 1
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,14 +47,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'django_extensions',
     'client_page',
     'main_page',
     'psihologist_page',
-    'registration_page',
+    # 'registration_page',
     'chat',
     'allauth',
     'allauth.account',
+    'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.vk',
     'allauth.socialaccount.providers.yandex',
@@ -151,7 +153,20 @@ STATICFILES_DIRS = [
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
+LOGIN_REDIRECT_URL = "/additionaly-info/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-ACCOUNT_FORMS = {'signup': 'registration_page.forms.CustomSignupForm'}
-ACCOUNT_TEMPLATES = {'signup': 'sign_up_social.html'}
+# ACCOUNT_FORMS = {'signup': 'registration_page.forms.CustomSignupForm'}
+# ACCOUNT_TEMPLATES = {'signup': 'sign_up_social.html'}
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}

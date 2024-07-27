@@ -23,7 +23,7 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include("main_page.urls")),
-    path('reg/', include("registration_page.urls")),
+    # path('reg/', include("registration_page.urls")),
     path('404/', views.error_404, name='404'),
     path('chat/', include("chat.urls")),
     path('summary/', include("psihologist_page.urls")),
