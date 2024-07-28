@@ -52,13 +52,12 @@ INSTALLED_APPS = [
     'client_page',
     'main_page',
     'psihologist_page',
-    # 'registration_page',
     'chat',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.vk',
+    # 'allauth.socialaccount.providers.vk',
     'allauth.socialaccount.providers.yandex',
 ]
 
@@ -153,8 +152,10 @@ STATICFILES_DIRS = [
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-LOGIN_REDIRECT_URL = "/additionaly-info/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+LOGIN_REDIRECT_URL = '/additionaly-info/'
+SOCIALACCOUNT_ADAPTER = 'main_page.adapters.MySocialAccountAdapter'
+
 # ACCOUNT_FORMS = {'signup': 'registration_page.forms.CustomSignupForm'}
 # ACCOUNT_TEMPLATES = {'signup': 'sign_up_social.html'}
 
@@ -168,5 +169,25 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         },
         'OAUTH_PKCE_ENABLED': True,
-    }
+    }, 
+    'yandex': {
+        'SCOPE': [
+            'login:email', 
+            'login:info',
+        ],
+    },
+    # 'vk': {
+    #     'APP': {
+    #         'client_id': '52053732',
+    #         'secret': 'ZQkIRTmOyZmGw3l91Nch',
+    #     },
+    #     'SCOPE': [
+    #         'email',
+    #         'first_name',
+    #         'last_name',
+    #     ],
+    #     'AUTH_PARAMS': {
+    #         'v': '5.131'
+    #     }
+    # }
 }

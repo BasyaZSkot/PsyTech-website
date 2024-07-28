@@ -11,7 +11,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.sites.models import Site
 from .forms import UserInformationForm
 from django.contrib.auth.models import Group
-
+    
 
 def group_validation(user_object, group_name):
     if list(user_object.groups.values_list("name", flat=True))[0]==group_name:
@@ -20,7 +20,6 @@ def group_validation(user_object, group_name):
         return False
 
 def home_page(request):
-    print(Site)
     notifications = {'summaries': [],
                      'meeting_messages': [],
                      'user_group': '',
@@ -251,22 +250,25 @@ def change_password(request):
     return render(request, "change_password.html")
 
 def additionaly(request):
-    if request.method == "POST":
-        form = UserInformationForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.clean()
-            specialyty = form.cleaned_data["specialyty"]
-            form = form.save(commit=False)
-            form.user = request.user
-            print(specialyty == "regular user")
-            form.save()
-            my_group = Group.objects.get(name=specialyty) 
-            my_group.user_set.add(request.user)
+    try:
+        user_info = UserInformation.objects.get(user=request.user)
+        return redirect("home")
+    except UserInformation.DoesNotExist:
+        if request.method == "POST":
+            form = UserInformationForm(request.POST, request.FILES)
+            if form.is_valid():
+                form.clean()
+                specialyty = form.cleaned_data["specialyty"]
+                form = form.save(commit=False)
+                form.user = request.user
+                form.save()
+                my_group = Group.objects.get(name=specialyty) 
+                my_group.user_set.add(request.user)
 
-            if specialyty == "regular user":
-                return redirect("home")
-            elif specialyty == "psihologist":
-                return redirect("filling_summary")
-    else:
-        form = UserInformationForm
-    return render(request, "additionaly.html", context={'form': form})
+                if specialyty == "regular user":
+                    return redirect("home")
+                elif specialyty == "psihologist":
+                    return redirect("filling_summary")
+        else:
+            form = UserInformationForm
+        return render(request, "additionaly.html", context={'form': form})
