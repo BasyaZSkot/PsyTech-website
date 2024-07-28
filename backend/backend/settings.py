@@ -154,7 +154,6 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/additionaly-info/'
-SOCIALACCOUNT_ADAPTER = 'main_page.adapters.MySocialAccountAdapter'
 
 # ACCOUNT_FORMS = {'signup': 'registration_page.forms.CustomSignupForm'}
 # ACCOUNT_TEMPLATES = {'signup': 'sign_up_social.html'}
