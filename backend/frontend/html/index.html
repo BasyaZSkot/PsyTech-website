@@ -57,21 +57,20 @@
                 {% if no_chats is False %}
                     <ul class="chats">
                         {% for chat in chats %}
-                            {% if chat.0 is False %}
-                            <li class="chat" id="{{ chat.1.id }}">
-                                    <a href="{% url 'chat' chat.1.id %}">
-                                    <h2>{{ chat.3.username }}</h2>
-                                    <p>{{ chat.2 }}</p>
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li class="chat" id="{{ chat.0.id }}">
-                                    <a href="{% url 'chat' chat.0.id %}">
-                                        <h2>{{ chat.0.user.username }}</h2>
-                                        <p>{{ chat.1 }}</p>
-                                    </a>
-                                </li>
-                            {% endif %}
+                            <li class="chat" id="{{ chat.id }}">
+                                <a href="{% url 'chat' chat.chat_name %}">
+                                    {% for i, l in recipient.items %}
+                                        {% if 'i == chat' %}
+                                            <h2>{{ l }}</h2>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% for i, l in first_message.items %}
+                                        {% if 'i == chat' %}
+                                            <p>{{ l }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                </a>
+                            </li>
                         {% endfor %}
                     </ul>
                 {% else %}
@@ -104,6 +103,7 @@
         </ul>
     </div>
     <script>
+
         const bar = document.getElementById("settingsBar");
         var count = 0;
         function settingsBarOpen() {

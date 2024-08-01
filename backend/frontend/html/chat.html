@@ -15,12 +15,12 @@
     <title>{{ chat.chat_name }}</title>
 </head>
 <body>
-    <h1 style="margin-left: 25px; margin-top: 30px; position: relative; color: white;">{{ recipient }}:</h1>
+    <h1 style="margin-left: 25px; margin-top: 30px; position: relative; color: white;">{{ user.username }}:</h1>
     <ul id="scrollableContainer" class="messages">
         {% for message in messages %}
             {% if message.sender == user %}
             <li id="{{ message.id }}" class="sender">
-                <p id="message">{{ message.content }}</p>
+                <p id="message">{{ message.message }}</p>
                 <div id="message-info">
                     {% if message.timestamp.minute < 10 %}
                         <p id="timestamp">{{ message.timestamp.hour }}. 0{{ message.timestamp.minute }}</p>
@@ -38,9 +38,9 @@
             {% else %}
                 {% if message.read_status == True %}
                     <li id="{{ message.id }}" class="recipient read">
-                        <p id="message">{{ message.content }}</p>
+                        <p id="message">{{ message.message }}</p>
                         <div id="message-info">
-                            <p id="recip">{{ recipient }}</p>
+                            <p id="recip">{{ user.username }}</p>
                             {% if message.timestamp.minute < 10 %}
                                 <p id="timestamp">{{ message.timestamp.hour }}. 0{{ message.timestamp.minute }}</p>
                             {% else %}
@@ -50,9 +50,9 @@
                     </li><br>
                 {% else %}
                     <li id="{{ message.id }}" class="recipient unread">
-                        <p id="message">{{ message.content }}</p>
+                        <p id="message">{{ message.message }}</p>
                         <div id="message-info">
-                            <p id="recip">{{ recipient }}</p>
+                            <p id="recip">{{ user.username }}</p>
                             {% if message.timestamp.minute < 10 %}
                                 <p id="timestamp">{{ message.timestamp.hour }}.0{{ message.timestamp.minute }}</p>
                             {% else %}
@@ -64,7 +64,7 @@
             {% endif %}
         {% endfor %}
     </ul>
-    <form autocomplete="off" method="post" id="message-form"  class="message-input-container">
+    <form autocomplete="off" id="message-form"  class="message-input-container">
         {% csrf_token %}
         <div id="errorMessage">
             <p>You have exceeded the character limit!</p>
@@ -76,6 +76,11 @@
     </form>
 
     <script>
+        let url = 'ws://'+ window.location.host+'/ws/chat/'+'{{chat.chat_name}}'+'/';
+        const socket = new WebSocket(url);
+        
+        let form = document.getElementById("message-form")
+
         var csrf = document.getElementsByName('csrfmiddlewaretoken')[0].value
         const textInput = document.getElementById('textInput');
         const charCount = document.getElementById('charCount');
@@ -85,6 +90,58 @@
         const visibleElements = getVisibleElements(container);
         if (visibleElements != []){
             changeReadStatus(visibleElements)
+        };
+
+        form.addEventListener("submit", (e)=> {
+            e.preventDefault();
+            let message = e.target.message.value;
+            if (message != ''){
+                socket.send(JSON.stringify({
+                    'message': message,
+                    'chat_name': '{{chat.chat_name}}',
+                    'username': '{{user.username}}',
+                }));
+                form.reset();
+            };
+        });
+
+        socket.onopen = function(event) {
+            console.log('Connection established');
+        };
+
+        socket.onmessage = function(e){
+            let data = JSON.parse(e.data);
+            if ( data.type === "chat" ){
+                let messages = document.getElementById("scrollableContainer");
+                if (data.timestamp[4]<10){
+                    var minute = '0'+data.timestamp[4];
+                } else{
+                    var minute = data.timestamp[4];
+                };
+                if (data.user_id == '{{user.id}}'){
+                    let user_type = 'sender';
+
+                    if (data.read_status){
+                        var check_cla = `id="double-check" class="fa-solid fa-check-double"`;
+                    } else {
+                        var check_class = `id="check" class="fa-solid fa-check"`;
+                    };
+
+                    var html_message = `<li id="${data.id}" class="sender"><p id="message">${data.message}</p><div id="message-info"><p id="timestamp">${data.timestamp[3]}. ${minute}</p><i ${check_class}></i></div></li>`;
+                } else {
+                    let user_type = 'recipient';
+                    if (data.read_status){
+                        let message_class = "recipient read";
+                    } else {
+                        let message_class = "recipient unread";
+                    };
+
+                    var html_message = `<li id="${data.id}" class=${message_class}><p id="message">${data.message}</p><div id="message-info"><p id="recip">${username}</p><p id="timestamp">${data.timestamp[3]}. ${minute}</p></div></li><br>`;
+                };
+                messages.insertAdjacentHTML('beforeend', html_message);
+                container.scrollTop = container.scrollHeight;
+                countSimboles()
+            };
         };
         
         window.onload = function() {
@@ -106,26 +163,26 @@
             };
         }
 
-        // function saveObject(element) {
-        //     $.ajax({
-        //         type: "POST",
-        //         url: "{% url 'save' %}",   
-        //         data: {csrfmiddlewaretoken: csrf,
-        //                model_id: element.id
-        //             },
-        //         success:  function(response){
-        //             alert(response);
-        //         }
-        //     });
-        // }
+        function saveObject(element) {
+            $.ajax({
+                type: "POST",
+                url: "{% url 'save' %}",   
+                data: {csrfmiddlewaretoken: csrf,
+                       model_id: element.id
+                    },
+                success:  function(response){
+                    alert(response);
+                }
+            });
+        }
         
-        // function changeReadStatus(elements){
-        //     elements.forEach(element => {
-        //         const error = saveObject(element);
-        //         console.log(error)
-        //         element.className = "recipient read";
-        //     });
-        // };
+        function changeReadStatus(elements){
+            elements.forEach(element => {
+                const error = saveObject(element);
+                console.log(error)
+                element.className = "recipient read";
+            });
+        };
 
         function handleEnterPress(event) {
             if (event.keyCode === 13) {
@@ -135,100 +192,42 @@
             };
         };
 
-        // function getVisibleElements(container) {
-        //     const containerRect = container.getBoundingClientRect();
-        //     const elements = container.children;
-        //     const visibleElements = [];
+        function getVisibleElements(container) {
+            const containerRect = container.getBoundingClientRect();
+            const elements = container.children;
+            const visibleElements = [];
 
-        //     for (let element of elements) {
-        //         const elementRect = element.getBoundingClientRect();
+            for (let element of elements) {
+                const elementRect = element.getBoundingClientRect();
 
-        //         if (
-        //             elementRect.top >= containerRect.top &&
-        //             elementRect.bottom <= containerRect.bottom &&
-        //             elementRect.left >= containerRect.left &&
-        //             elementRect.right <= containerRect.right
-        //         ) {
-        //             if (element.className === "recipient unread"){
-        //                 visibleElements.push(element);
-        //             };
-        //         };
-        //     };
+                if (
+                    elementRect.top >= containerRect.top &&
+                    elementRect.bottom <= containerRect.bottom &&
+                    elementRect.left >= containerRect.left &&
+                    elementRect.right <= containerRect.right
+                ) {
+                    if (element.className === "recipient unread"){
+                        visibleElements.push(element);
+                    };
+                };
+            };
 
-        //     return visibleElements;
-        // };
+            return visibleElements;
+        };
 
         textInput.addEventListener("keydown", handleEnterPress);
         
-        // container.addEventListener('scroll', () => {
-        //     const visibleElements = getVisibleElements(container);
-        //     if (visibleElements != []){
-        //         changeReadStatus(visibleElements)
-        //     };
-        // });
+        container.addEventListener('scroll', () => {
+            const visibleElements = getVisibleElements(container);
+            if (visibleElements != []){
+                changeReadStatus(visibleElements)
+            };
+        });
 
         
 
         textInput.addEventListener('input', countSimboles);
 
     </script>
-    <script>
-        function scrollToBottom() {
-            var chatContainer = document.getElementById("chatContainer");
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        };
-        // Determine the WebSocket protocol based on the application's URL
-        const websocketProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const wsEndpoint = `${websocketProtocol}://${window.location.host}/ws/notification/{{room_name}}/`;
-    
-        // Create a new WebSocket connection
-        const socket = new WebSocket(wsEndpoint);
-    
-        // Successful connection event
-        socket.onopen = (event) => {
-            console.log("WebSocket connection opened!");
-        };
-    
-        // Socket disconnect event
-        socket.onclose = (event) => {
-            console.log("WebSocket connection closed!");
-        };
-    
-        // Form submit listener
-        document.getElementById('message-form').addEventListener('submit', function(event){
-            event.preventDefault();
-            const message = document.getElementById('msg').value;
-            socket.send(
-                JSON.stringify({
-                    'message': message,
-                    'chat_name': '{{chat.chat_name}}',
-                    'sender': '{{user}}',
-                })
-            );
-        });
-    
-        // Response from consumer on the server
-        socket.addEventListener("message", (event) => {
-            const messageData = JSON.parse(event.data)['message'];
-            console.log(messageData);
-    
-            var sender = messageData['sender'];
-            var message = messageData['message'];
-    
-            // Empty the message input field after the message has been sent
-            if (sender == '{{user}}'){
-                document.getElementById('msg').value = '';
-            }
-    
-            // Append the message to the chatbox
-            var messageDiv = document.querySelector('.message');
-            if (sender != '{{user}}') { // Assuming you have a variable `currentUser` to hold the current user's name
-                messageDiv.innerHTML += '<div class="receive"><p style="color: #000;">' + message + '<strong>-' + sender + '</strong></p></div>';
-            } else {
-                messageDiv.innerHTML += '<div class="send"><p style="color: #000;">' + message + '</p></div>';
-            }
-            scrollToBottom();
-        });
-    </script>
-</body>
+</body> 
 </html>

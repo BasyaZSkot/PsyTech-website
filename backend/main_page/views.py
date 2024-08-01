@@ -4,14 +4,15 @@ from psihologist_page.models import Summary
 import copy
 from .models import SystemMessages
 from django.contrib.auth.models import User
-from chat.models import Message
+from chat.models import Message, Chat
 from django.db.models import Q
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
 from django.contrib.sites.models import Site
 from .forms import UserInformationForm
 from django.contrib.auth.models import Group
-    
+from django.db.models.query import QuerySet
+
 
 def group_validation(user_object, group_name):
     if list(user_object.groups.values_list("name", flat=True))[0]==group_name:
@@ -29,37 +30,40 @@ def home_page(request):
                      'reject_message': None,
                      }
     chats = []
+    chat_first_messages = {}
     no_chats = True
     user_info = ""
     no_image = True
+    recipient = {}
     if request.user.is_authenticated:
-        user_info = UserInformation.objects.get(user=request.user)
-        if user_info.profile_picture:
-            no_image = False
-
         if not request.user.is_superuser:
+            user_info = UserInformation.objects.get(user=request.user)
+            if user_info.profile_picture:
+                no_image = False
             notifications['user_group'] = list(request.user .groups.values_list("name", flat=True))[0]        
         notif_copy = copy.deepcopy(notifications)
 
         if request.user.is_superuser:
             all_summaries = Summary.objects.all()
-            
+             
             for summary in all_summaries:
-                if group_validation(summary.user, "psihologyst"):
+                if group_validation(summary.user, "psihologist"):
                     notifications['summaries'].append(summary)
+                    notifications["no_notif"] = False
                 try:
-                    __object = SystemMessages.objects.get(sender=request.user, recipient=summary.user, content="summary confirmation")
-                    first_message = Message.objects.filter(
-                        Q(sender=request.user, recipient=summary.user,) | 
-                        Q(sender=summary.user, recipient=request.user,)).order_by('timestamp')
-                    
+                    chat = [i for i in Chat.objects.all() if (request.user in i.members.all() and summary.user in i.members.all())][0]
+                    first_message = Message.objects.filter(chat=chat)
                     if not first_message:
-                        chats.append([summary, ""])
+                        chats.append(chat)
+                        chat_first_messages[chat] = ''
                     else:
                         first_message = first_message.reverse()[0]
                         if len(first_message.content) > 7:
-                            first_message.content += "..."
-                        chats.append([summary, first_message.content])
+                            chat_first_messages[chat] = first_message.message+'...'
+                        else:
+                            chat_first_messages[chat] = first_message.message
+                        chats.append(chat)
+                    recipient[chat] = summary.user
                     no_chats = False
                 except:
                     pass
@@ -85,18 +89,21 @@ def home_page(request):
                 notifications["reject_message"] = __object
             except:
                 try:
-                    __object = SystemMessages.objects.get(recipient=request.user, content="summary confirmation", read_status=False)
+                    chat = Chat.objects.get(members=(request.user, summary.sender))
                     notifications["summary_confirmation"] = True
-                    first_message = Message.objects.filter(
-                        Q(sender=request.user, recipient=__object.sender,) | 
-                        Q(sender=__object.sender, recipient=request.user,)).order_by('timestamp')
-                    if first_message == None:
-                        chats.append([False, my_summary, "", __object.sender])  
+
+                    first_message = Message.objects.filter(chat=chat)
+                    
+                    if not first_message:
+                        chats.append(chat)
+                        chat_first_messages[chat] = ''
                     else:
-                        first_message.reverse()[0]
+                        first_message = first_message.reverse()[0]
                         if len(first_message.content) > 7:
-                            first_message.content += "..."
-                        chats.append([False, my_summary, first_message.content, __object.sender])
+                            chat_first_messages[chat] = first_message.message+'...'
+                        else:
+                            chat_first_messages[chat] = first_message.message
+                        chats.append(chat)
                     no_chats = False
                 except:
                     pass
@@ -111,13 +118,16 @@ def home_page(request):
     psihologysts = User.objects.filter(groups__name='confirm psihologyst')
     for psih in psihologysts:
         psihologysts_info.append(UserInformation.objects.get(user=psih))
-
+    print(no_chats)
     return render(request, "index.html", context={"notifications": notifications,
                                                   "psihologysts_info": psihologysts_info,
                                                   "chats": chats,
                                                   "no_chats": no_chats,
                                                   "user_info": user_info,
                                                   "no_image": no_image,
+                                                  "first_message": chat_first_messages,
+                                                  "user": request.user,
+                                                  "recipient": recipient,
                                                   })
 
 
@@ -250,25 +260,28 @@ def change_password(request):
     return render(request, "change_password.html")
 
 def additionaly(request):
-    try:
-        user_info = UserInformation.objects.get(user=request.user)
-        return redirect("home")
-    except UserInformation.DoesNotExist:
-        if request.method == "POST":
-            form = UserInformationForm(request.POST, request.FILES)
-            if form.is_valid():
-                form.clean()
-                specialyty = form.cleaned_data["specialyty"]
-                form = form.save(commit=False)
-                form.user = request.user
-                form.save()
-                my_group = Group.objects.get(name=specialyty) 
-                my_group.user_set.add(request.user)
+    if not request.user.is_superuser:
+        try:
+            user_info = UserInformation.objects.get(user=request.user)
+            return redirect("home")
+        except UserInformation.DoesNotExist:
+            if request.method == "POST":
+                form = UserInformationForm(request.POST, request.FILES)
+                if form.is_valid():
+                    form.clean()
+                    specialyty = form.cleaned_data["specialyty"]
+                    form = form.save(commit=False)
+                    form.user = request.user
+                    form.save()
+                    my_group = Group.objects.get(name=specialyty) 
+                    my_group.user_set.add(request.user)
 
-                if specialyty == "regular user":
-                    return redirect("home")
-                elif specialyty == "psihologist":
-                    return redirect("filling_summary")
-        else:
-            form = UserInformationForm
-        return render(request, "additionaly.html", context={'form': form})
+                    if specialyty == "regular user":
+                        return redirect("home")
+                    elif specialyty == "psihologist":
+                        return redirect("filling_summary")
+            else:
+                form = UserInformationForm
+            return render(request, "additionaly.html", context={'form': form})
+    else:
+        return redirect("home")

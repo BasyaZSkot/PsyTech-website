@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 
 class Chat(models.Model):
     chat_name = models.CharField(max_length=255)
-    members = models.ManyToManyField(User, related_name="members", blank=True)
+    members = models.ManyToManyField(User)
     chat_type = models.CharField(max_length=7, choices=(("default", "default"), ("support", "support")), default=("default"))
 
     def __str__(self) -> str:

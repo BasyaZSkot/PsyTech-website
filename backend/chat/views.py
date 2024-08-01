@@ -1,11 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Message, Chat
-from .forms import MessageForm
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from psihologist_page.models import Summary
-from django.db.models import Q
-from main_page.models import SystemMessages
-import json
 
 # Create your views here.
 def mark_as_read(request, pk):
@@ -39,6 +34,7 @@ def mark_as_read(request, pk):
 def save(request):
     if request.method == 'POST':
         message_id = request.POST.get('model_id')
+        chat = request.POST.get('chat')
         message = Message.objects.get(id=message_id)
         message.read_status = True
         message.save()
@@ -46,14 +42,14 @@ def save(request):
         if request.user.is_superuser:
             summary = Summary.objects.get(user=message.sender)
         
-        return redirect('chat', summary.id)
+        return redirect('chat', chat.chat_name)
     else:
         return redirect("home")
 
 
 def MessageView(request, chat_name):
     chat = Chat.objects.get(chat_name=chat_name)
-    if request.user in chat.members:
+    if request.user in chat.members.all():
         messages = Message.objects.filter(chat=chat)
         return render(request, 'chat.html', context={
             "messages": messages,

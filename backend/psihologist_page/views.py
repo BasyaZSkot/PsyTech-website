@@ -4,6 +4,7 @@ from .forms import SummaryForm, SummaryDescriptionForm
 from django.views import generic
 from main_page.models import SystemMessages
 from django.contrib.auth.models import Group
+from chat.models import Chat
 
 # Create your views here.
 
@@ -81,8 +82,10 @@ def confirm_summary(request, pk):
                                content="summary confirmation", 
                                )
         confirmation.save()
+        new_chat = Chat(chat_name=f'{request.user}-{summary_sender}')
+        new_chat.save()
 
-        return redirect("chat", pk)
+        return redirect("chat", new_chat.chat_name)
     else:
         return redirect("404")
     
