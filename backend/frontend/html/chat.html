@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Maname&display=swap" rel="stylesheet">
-    <title>Visible Elements</title>
+    <title>{{ chat.chat_name }}</title>
 </head>
 <body>
     <h1 style="margin-left: 25px; margin-top: 30px; position: relative; color: white;">{{ recipient }}:</h1>
@@ -64,7 +64,7 @@
             {% endif %}
         {% endfor %}
     </ul>
-    <form autocomplete="off" method="post" class="message-input-container">
+    <form autocomplete="off" method="post" id="message-form"  class="message-input-container">
         {% csrf_token %}
         <div id="errorMessage">
             <p>You have exceeded the character limit!</p>
@@ -106,73 +106,129 @@
             };
         }
 
-        function saveObject(element) {
-            $.ajax({
-                type: "POST",
-                url: "{% url 'save' %}",   
-                data: {csrfmiddlewaretoken: csrf,
-                       model_id: element.id
-                    },
-                success:  function(response){
-                    alert(response);
-                }
-            });
-        }
+        // function saveObject(element) {
+        //     $.ajax({
+        //         type: "POST",
+        //         url: "{% url 'save' %}",   
+        //         data: {csrfmiddlewaretoken: csrf,
+        //                model_id: element.id
+        //             },
+        //         success:  function(response){
+        //             alert(response);
+        //         }
+        //     });
+        // }
         
-        function changeReadStatus(elements){
-            elements.forEach(element => {
-                const error = saveObject(element);
-                console.log(error)
-                element.className = "recipient read";
-            });
-        };
+        // function changeReadStatus(elements){
+        //     elements.forEach(element => {
+        //         const error = saveObject(element);
+        //         console.log(error)
+        //         element.className = "recipient read";
+        //     });
+        // };
 
         function handleEnterPress(event) {
             if (event.keyCode === 13) {
                 var button = document.getElementById("send");
                 button.click();
             
-            } else{
-                console.log("You didn't click an enter")
             };
         };
 
-        function getVisibleElements(container) {
-            const containerRect = container.getBoundingClientRect();
-            const elements = container.children;
-            const visibleElements = [];
+        // function getVisibleElements(container) {
+        //     const containerRect = container.getBoundingClientRect();
+        //     const elements = container.children;
+        //     const visibleElements = [];
 
-            for (let element of elements) {
-                const elementRect = element.getBoundingClientRect();
+        //     for (let element of elements) {
+        //         const elementRect = element.getBoundingClientRect();
 
-                if (
-                    elementRect.top >= containerRect.top &&
-                    elementRect.bottom <= containerRect.bottom &&
-                    elementRect.left >= containerRect.left &&
-                    elementRect.right <= containerRect.right
-                ) {
-                    if (element.className === "recipient unread"){
-                        visibleElements.push(element);
-                    };
-                };
-            };
+        //         if (
+        //             elementRect.top >= containerRect.top &&
+        //             elementRect.bottom <= containerRect.bottom &&
+        //             elementRect.left >= containerRect.left &&
+        //             elementRect.right <= containerRect.right
+        //         ) {
+        //             if (element.className === "recipient unread"){
+        //                 visibleElements.push(element);
+        //             };
+        //         };
+        //     };
 
-            return visibleElements;
-        };
+        //     return visibleElements;
+        // };
 
         textInput.addEventListener("keydown", handleEnterPress);
         
-        container.addEventListener('scroll', () => {
-            const visibleElements = getVisibleElements(container);
-            if (visibleElements != []){
-                changeReadStatus(visibleElements)
-            };
-        });
+        // container.addEventListener('scroll', () => {
+        //     const visibleElements = getVisibleElements(container);
+        //     if (visibleElements != []){
+        //         changeReadStatus(visibleElements)
+        //     };
+        // });
 
         
 
         textInput.addEventListener('input', countSimboles);
 
+    </script>
+    <script>
+        function scrollToBottom() {
+            var chatContainer = document.getElementById("chatContainer");
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        };
+        // Determine the WebSocket protocol based on the application's URL
+        const websocketProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsEndpoint = `${websocketProtocol}://${window.location.host}/ws/notification/{{room_name}}/`;
+    
+        // Create a new WebSocket connection
+        const socket = new WebSocket(wsEndpoint);
+    
+        // Successful connection event
+        socket.onopen = (event) => {
+            console.log("WebSocket connection opened!");
+        };
+    
+        // Socket disconnect event
+        socket.onclose = (event) => {
+            console.log("WebSocket connection closed!");
+        };
+    
+        // Form submit listener
+        document.getElementById('message-form').addEventListener('submit', function(event){
+            event.preventDefault();
+            const message = document.getElementById('msg').value;
+            socket.send(
+                JSON.stringify({
+                    'message': message,
+                    'chat_name': '{{chat.chat_name}}',
+                    'sender': '{{user}}',
+                })
+            );
+        });
+    
+        // Response from consumer on the server
+        socket.addEventListener("message", (event) => {
+            const messageData = JSON.parse(event.data)['message'];
+            console.log(messageData);
+    
+            var sender = messageData['sender'];
+            var message = messageData['message'];
+    
+            // Empty the message input field after the message has been sent
+            if (sender == '{{user}}'){
+                document.getElementById('msg').value = '';
+            }
+    
+            // Append the message to the chatbox
+            var messageDiv = document.querySelector('.message');
+            if (sender != '{{user}}') { // Assuming you have a variable `currentUser` to hold the current user's name
+                messageDiv.innerHTML += '<div class="receive"><p style="color: #000;">' + message + '<strong>-' + sender + '</strong></p></div>';
+            } else {
+                messageDiv.innerHTML += '<div class="send"><p style="color: #000;">' + message + '</p></div>';
+            }
+            scrollToBottom();
+        });
     </script>
 </body>
 </html>

@@ -41,6 +41,8 @@ MEDIA_URL = '/files/'
 # Application definition
 SITE_ID = 1
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -98,6 +100,11 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+ASGI_APPLICATION = 'backend.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"},
+}
 
 
 # Database
