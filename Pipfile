@@ -13,9 +13,10 @@ pyjwt = "*"
 django-allauth = "*"
 django-cors-headers = "*"
 django = "*"
-daphne = "*"
+daphne = "==3.0.2"
 django-channels = {extras = ["daphne"], version = "*"}
 channels = "*"
+agiref = "*"
 
 [dev-packages]
 
