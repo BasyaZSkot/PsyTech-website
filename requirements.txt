@@ -1,24 +1,14 @@
-[[source]]
-url = "https://pypi.org/simple"
-verify_ssl = true
-name = "pypi"
-
-[packages]
-pillow = "*"
-django-extensions = "*"
-werkzeug = "*"
-pyopenssl = "*"
-requests = "*"
-pyjwt = "*"
-django-allauth = "*"
-django-cors-headers = "*"
-django = "*"
-daphne = "==3.0.2"
-django-channels = {extras = ["daphne"], version = "*"}
-channels = "*"
-agiref = "*"
-
-[dev-packages]
-
-[requires]
+pillow
+django-extensions
+werkzeug 
+pyopenssl
+requests
+pyjwt
+django-allauth
+django-cors-headers
+django
+daphne
+django-channels
+channels 
+agiref
 python_version = "3.11"
