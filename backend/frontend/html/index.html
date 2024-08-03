@@ -29,22 +29,22 @@
                     {% else %}
                         <ul>
                             {% for object in notifications.summaries %}
-                                <li class="content">User {{ object.sender.username }} send <a href="{% url 'summaries_view' object.id %}">a summary</a></li>
+                                <li id="unread" class="content">User {{ object.sender.username }} send <a href="{% url 'summaries_view' object.id %}">a summary</a></li>
                             {% endfor %}
                         </ul>
                         <ul>
                             {% if notifications.summary_confirmation %}
-                                <li class="content">You are suitable for us, the final decision will be made during the call. You can arrange a call via <a href="{% url 'chat' notifications.my_summary.id %}">chat</a></li>
+                                <li id="unread" class="content">You are suitable for us, the final decision will be made during the call. You can arrange a call via <a href="{% url 'chat' notifications.my_summary.id %}">chat</a></li>
                             {% elif notifications.summary_confirmation is False  %}  
-                                <li class="content">Sorry, but you are not suitable for us. <a href="{% url 'summary_mistakes_view' notifications.reject_message.id %}">Click to see your mistakes or flaws</a></li>
+                                <li id="unread" class="content">Sorry, but you are not suitable for us. <a href="{% url 'summary_mistakes_view' notifications.reject_message.id %}">Click to see your mistakes or flaws</a></li>
                             {% endif %}
                         </ul>
                         <ul>
                             {% for object in notifications.meeting_messages %}
                                 {% if 'notifications.user_group=="regular user"'  %}
-                                    <li class="content">Psihologyst {{ object.sender.username }} can meet you. You can agree with him/her in <a href="{% url 'chat' object.id %}">chat</a></li>
+                                    <li d="unread" class="content">Psihologyst {{ object.sender.username }} can meet you. You can agree with him/her in <a href="{% url 'chat' object.id %}">chat</a></li>
                                 {% elif 'notifications.user_group =="confirm psihologyst"' %}
-                                    <li class="content">User {{ object.sender.username }} want to meet with you.</li> <!-- Link to confirm/reject request -->
+                                    <li d="unread" class="content">User {{ object.sender.username }} want to meet with you.</li> <!-- Link to confirm/reject request -->
                                 {% endif %}
                             {% endfor %}
                         </ul>

@@ -5,13 +5,10 @@ import copy
 from .models import SystemMessages
 from django.contrib.auth.models import User
 from chat.models import Message, Chat
-from django.db.models import Q
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
-from django.contrib.sites.models import Site
 from .forms import UserInformationForm
 from django.contrib.auth.models import Group
-from django.db.models.query import QuerySet
 
 
 def group_validation(user_object, group_name):
@@ -19,6 +16,78 @@ def group_validation(user_object, group_name):
         return True
     else:
         return False
+
+def superuser(request, notifications):
+    chats = []
+    chat_first_messages = {}
+    recipient = {}
+    all_summaries = Summary.objects.all()
+    no_chats = True
+    for summary in all_summaries:
+        if group_validation(summary.user, "psihologist"):
+            notifications['summaries'].append(summary)
+            notifications["no_notif"] = False
+        try:
+            chat = [i for i in Chat.objects.all() if (request.user in i.members.all() and summary.user in i.members.all())][0]
+            first_message = Message.objects.filter(chat=chat)
+            if not first_message:
+                chats.append(chat)
+                chat_first_messages[chat] = ''
+            else:
+                first_message = first_message.reverse()[0]
+                if len(first_message.message) > 7:
+                    chat_first_messages[chat] = first_message.message+'...'
+                else:
+                    chat_first_messages[chat] = first_message.message
+                    
+                chats.append(chat)
+                recipient[chat] = summary.user
+                no_chats = False
+        except:
+            pass
+
+    return chats, no_chats, chat_first_messages, recipient, notifications
+
+def psihologyst(request, notifications, notif_copy):
+    chats = []
+    chat_first_messages = {}
+    recipient = {}
+    no_chats = True
+    my_summary = Summary.objects.get(user=request.user)
+    notif_copy['my_summary'] = my_summary
+    notifications['my_summary'] = my_summary
+
+    try:
+        __object = SystemMessages.objects.get(recipient=request.user, content="summary rejection", read_status=False)
+        notifications["summary_confirmation"] = False
+        notifications["reject_message"] = __object
+    except:
+        try:
+            __object = SystemMessages.objects.get(recipient=request.user, content="summary confirmation")
+            chat = [i for i in Chat.objects.all() if (request.user in i.members.all() and __object.sender in i.members.all())][0]
+
+            notifications["summary_confirmation"] = True
+
+            first_message = Message.objects.filter(chat=chat)
+                    
+            if not first_message:
+                chats.append(chat)
+                chat_first_messages[chat] = ''
+            else:
+                first_message = first_message.reverse()[0]
+                if len(first_message.message) > 7:
+                    chat_first_messages[chat] = first_message.message+'...'
+                else:
+                    chat_first_messages[chat] = first_message.message
+                chats.append(chat)
+                recipient[chat] = __object.sender
+                no_chats = False
+        except:
+            pass
+
+
+    return notif_copy, chats, no_chats, chat_first_messages, recipient, notifications
+
 
 def home_page(request):
     notifications = {'summaries': [],
@@ -29,9 +98,6 @@ def home_page(request):
                      'no_notif': False,
                      'reject_message': None,
                      }
-    chats = []
-    chat_first_messages = {}
-    no_chats = True
     user_info = ""
     no_image = True
     recipient = {}
@@ -44,29 +110,7 @@ def home_page(request):
         notif_copy = copy.deepcopy(notifications)
 
         if request.user.is_superuser:
-            all_summaries = Summary.objects.all()
-             
-            for summary in all_summaries:
-                if group_validation(summary.user, "psihologist"):
-                    notifications['summaries'].append(summary)
-                    notifications["no_notif"] = False
-                try:
-                    chat = [i for i in Chat.objects.all() if (request.user in i.members.all() and summary.user in i.members.all())][0]
-                    first_message = Message.objects.filter(chat=chat)
-                    if not first_message:
-                        chats.append(chat)
-                        chat_first_messages[chat] = ''
-                    else:
-                        first_message = first_message.reverse()[0]
-                        if len(first_message.content) > 7:
-                            chat_first_messages[chat] = first_message.message+'...'
-                        else:
-                            chat_first_messages[chat] = first_message.message
-                        chats.append(chat)
-                    recipient[chat] = summary.user
-                    no_chats = False
-                except:
-                    pass
+            chats, no_chats, chat_first_messages, recipient, notifications = superuser(request)
 
 
         elif group_validation(request.user, "regular user"):
@@ -77,36 +121,7 @@ def home_page(request):
 
 
         else:
-            my_summary = Summary.objects.get(user=request.user)
-            notif_copy['my_summary'] = my_summary
-            notifications['my_summary'] = my_summary
-
-            # meeting_messages = Message.objects.filter(recipient=request.user, content="meeting reuqest", read_status=False)
-            
-            try:
-                __object = SystemMessages.objects.get(recipient=request.user, content="summary rejection", read_status=False)
-                notifications["summary_confirmation"] = False
-                notifications["reject_message"] = __object
-            except:
-                try:
-                    chat = Chat.objects.get(members=(request.user, summary.sender))
-                    notifications["summary_confirmation"] = True
-
-                    first_message = Message.objects.filter(chat=chat)
-                    
-                    if not first_message:
-                        chats.append(chat)
-                        chat_first_messages[chat] = ''
-                    else:
-                        first_message = first_message.reverse()[0]
-                        if len(first_message.content) > 7:
-                            chat_first_messages[chat] = first_message.message+'...'
-                        else:
-                            chat_first_messages[chat] = first_message.message
-                        chats.append(chat)
-                    no_chats = False
-                except:
-                    pass
+            notif_copy, chats, no_chats, chat_first_messages, recipient, notifications = psihologyst(request, notifications, notif_copy)
 
             # for message in meeting_messages:
             #     notifications["meeting_messages"].append(message)
@@ -115,10 +130,9 @@ def home_page(request):
             notifications["no_notif"] = True
 
     psihologysts_info = []
-    psihologysts = User.objects.filter(groups__name='confirm psihologyst')
+    psihologysts = User.objects.filter(groups__name='confirm psihologist')
     for psih in psihologysts:
         psihologysts_info.append(UserInformation.objects.get(user=psih))
-    print(no_chats)
     return render(request, "index.html", context={"notifications": notifications,
                                                   "psihologysts_info": psihologysts_info,
                                                   "chats": chats,

@@ -27,11 +27,11 @@
                     {% else %}
                         <p id="timestamp">{{ message.timestamp.hour }}. {{ message.timestamp.minute }}</p>
                     {% endif %}
-                    {% if message.read_status %}
+                    <!-- {% if message.read_status %}
                         <i id="double-check" class="fa-solid fa-check-double"></i>
                     {% else %}
                         <i id="check" class="fa-solid fa-check"></i>
-                    {% endif %}
+                    {% endif %} -->
                 </div>
             </li>
             
@@ -76,6 +76,7 @@
     </form>
 
     <script>
+        var socket_type = "connecting"
         let url = 'ws://'+ window.location.host+'/ws/chat/'+'{{chat.chat_name}}'+'/';
         const socket = new WebSocket(url);
         
@@ -93,19 +94,23 @@
         };
 
         form.addEventListener("submit", (e)=> {
-            e.preventDefault();
-            let message = e.target.message.value;
-            if (message != ''){
-                socket.send(JSON.stringify({
-                    'message': message,
-                    'chat_name': '{{chat.chat_name}}',
-                    'username': '{{user.username}}',
-                }));
-                form.reset();
+            if (socket_type === "connect"){
+                e.preventDefault();
+                let message = e.target.message.value;
+                if (message != ''){
+                    socket.send(JSON.stringify({
+                        'type': 'message',
+                        'message': message,
+                        'chat_name': '{{chat.chat_name}}',
+                        'username': '{{user.username}}',
+                    }));
+                    form.reset();
+                };
             };
         });
 
         socket.onopen = function(event) {
+            socket_type = "connect"
             console.log('Connection established');
         };
 
@@ -121,13 +126,13 @@
                 if (data.user_id == '{{user.id}}'){
                     let user_type = 'sender';
 
-                    if (data.read_status){
-                        var check_cla = `id="double-check" class="fa-solid fa-check-double"`;
-                    } else {
-                        var check_class = `id="check" class="fa-solid fa-check"`;
-                    };
+                    // if (data.read_status){
+                    //     var check_cla = `id="double-check" class="fa-solid fa-check-double"`;
+                    // } else {
+                    //     var check_class = `id="check" class="fa-solid fa-check"`;
+                    // };
 
-                    var html_message = `<li id="${data.id}" class="sender"><p id="message">${data.message}</p><div id="message-info"><p id="timestamp">${data.timestamp[3]}. ${minute}</p><i ${check_class}></i></div></li>`;
+                    var html_message = `<li id="${data.id}" class="sender"><p id="message">${data.message}</p><div id="message-info"><p id="timestamp">${data.timestamp[3]}. ${minute}</p>`; // <i ${check_class}></i></div></li>
                 } else {
                     let user_type = 'recipient';
                     if (data.read_status){
@@ -141,6 +146,9 @@
                 messages.insertAdjacentHTML('beforeend', html_message);
                 container.scrollTop = container.scrollHeight;
                 countSimboles()
+            } else if (data.type === "read_status"){
+                console.log(data.message)
+                element.className = "recipient read"
             };
         };
         
@@ -164,23 +172,18 @@
         }
 
         function saveObject(element) {
-            $.ajax({
-                type: "POST",
-                url: "{% url 'save' %}",   
-                data: {csrfmiddlewaretoken: csrf,
-                       model_id: element.id
-                    },
-                success:  function(response){
-                    alert(response);
-                }
-            });
+            console.log("connect")
+            if (socket_type == "connect"){
+                socket.send(JSON.stringify({
+                    "type": "read_status",
+                    "id": element.id
+                }))
+            };
         }
         
         function changeReadStatus(elements){
             elements.forEach(element => {
-                const error = saveObject(element);
-                console.log(error)
-                element.className = "recipient read";
+                saveObject(element);
             });
         };
 
@@ -211,7 +214,6 @@
                     };
                 };
             };
-
             return visibleElements;
         };
 
