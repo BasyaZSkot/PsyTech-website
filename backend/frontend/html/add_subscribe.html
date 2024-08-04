@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add-Subscribe</title>
+</head>
+<style>
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+    }
+</style>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <ul>
+            <p>Price with your experience can't be more that {{ threshold }}</p>
+            {% for f in form %}
+                Price for session: <li id="price">{{ f }}</li>
+            {% endfor %}
+            <p>The company will take 20% of your price.</p>
+            You will get: <input id="will_get" type="number" disabled>
+        </ul>
+        <button type="submit">Submit</button>
+    </form>
+    <script>
+        const price = document.getElementById("id_per_session")
+        price.max = "{{threshold}}"
+        price.min = "0"
+        const will_get = document.getElementById("will_get")
+        var last_price = 0
+        price.addEventListener("input", function() {
+            if (parseInt(price.value) < parseInt(price.min)) {
+                price.value = price.min;
+                }
+            if (parseInt(price.value) > parseInt(price.max)) {
+                price.value = price.max;
+            }
+            will_get.value = Math.round(price.value*0.8)
+        })
+    </script>
+</body>
+</html>

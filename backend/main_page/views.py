@@ -1,22 +1,56 @@
 from django.shortcuts import render, redirect
-from .models import UserInformation
-from psihologist_page.models import Summary
-import copy
-from .models import SystemMessages
-from django.contrib.auth.models import User
-from chat.models import Message, Chat
-from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
-from .forms import UserInformationForm
-from django.contrib.auth.models import Group
 
+from .models import UserInformation, Subscribe, SystemMessages
+from psihologist_page.models import Summary, FreePlaces
+from chat.models import Message, Chat
+from django.contrib.auth.models import Group
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+
+from .forms import UserInformationForm
+
+from backend.settings import SUBSCRIBE_PRICE
+
+import copy
+from datetime import timedelta, datetime
+import json
+
+
+@login_required(login_url='/accounts/login/')
+def choose_session_date(request):
+    if request.method == "POST":
+        sessions_date = json.loads(request.POST.get("selected_dates"))
+        lists = []
+        if type(sessions_date) != list:
+            for i, l in sessions_date.items():
+                _ = i.split("-")
+                for q in l:
+                    o = q.split(':')
+                    lists.append([_, o])
+            FreePlaces.objects.create(user=request.user, free_places=json.dumps(lists))
+
+    free_places = FreePlaces.objects.filter(user=request.user)
+    print(free_places)
+    return render(request, "choose_session_date.html")
+
+@login_required(login_url='/accounts/login/')
+def pay(request, subscribe_time):
+    duration = SUBSCRIBE_PRICE[subscribe_time]["duration"]
+    if duration != 0:
+        obj = Subscribe.objects.create(user=request.user, subscribe=subscribe_time, duration=timedelta(days=duration), session_num=SUBSCRIBE_PRICE[subscribe_time]["sessions"])
+    else:
+        obj = Subscribe.objects.create(user=request.user, subscribe=subscribe_time, duration=timedelta(days=365), sessions_num=1)
+    return redirect("home")
 
 def group_validation(user_object, group_name):
     if list(user_object.groups.values_list("name", flat=True))[0]==group_name:
         return True
     else:
         return False
-
+    
+@login_required(login_url='/accounts/login/')
 def superuser(request, notifications):
     chats = []
     chat_first_messages = {}
@@ -48,6 +82,7 @@ def superuser(request, notifications):
 
     return chats, no_chats, chat_first_messages, recipient, notifications
 
+@login_required(login_url='/accounts/login/')
 def psihologyst(request, notifications, notif_copy):
     chats = []
     chat_first_messages = {}
@@ -101,16 +136,28 @@ def home_page(request):
     user_info = ""
     no_image = True
     recipient = {}
+    chats = None
+    no_chats = None
+    chat_first_messages = None
+    group = None
     if request.user.is_authenticated:
+        try:
+            subscribe = Subscribe.objects.get(user=request.user)
+        except:
+            subscribe = None
         if not request.user.is_superuser:
-            user_info = UserInformation.objects.get(user=request.user)
+            try:
+                user_info = UserInformation.objects.get(user=request.user)
+            except:
+                redirect("additionaly")
+
             if user_info.profile_picture:
                 no_image = False
             notifications['user_group'] = list(request.user .groups.values_list("name", flat=True))[0]        
         notif_copy = copy.deepcopy(notifications)
 
         if request.user.is_superuser:
-            chats, no_chats, chat_first_messages, recipient, notifications = superuser(request)
+            chats, no_chats, chat_first_messages, recipient, notifications = superuser(request, notifications)
 
 
         elif group_validation(request.user, "regular user"):
@@ -121,6 +168,7 @@ def home_page(request):
 
 
         else:
+            group = "psih"
             notif_copy, chats, no_chats, chat_first_messages, recipient, notifications = psihologyst(request, notifications, notif_copy)
 
             # for message in meeting_messages:
@@ -133,6 +181,8 @@ def home_page(request):
     psihologysts = User.objects.filter(groups__name='confirm psihologist')
     for psih in psihologysts:
         psihologysts_info.append(UserInformation.objects.get(user=psih))
+    prices_for_subscribe = SUBSCRIBE_PRICE
+
     return render(request, "index.html", context={"notifications": notifications,
                                                   "psihologysts_info": psihologysts_info,
                                                   "chats": chats,
@@ -142,6 +192,9 @@ def home_page(request):
                                                   "first_message": chat_first_messages,
                                                   "user": request.user,
                                                   "recipient": recipient,
+                                                  "subscribes": prices_for_subscribe,
+                                                  "group": group,
+                                                  "subscribe": subscribe
                                                   })
 
 
@@ -156,7 +209,7 @@ def psihologyst_detail_view(request, pk):
                                                       "psihologyst_inf": psihologyst_inf,
                                                       "user_inf": user_inf,
                                                       })
-
+@login_required(login_url='/accounts/login/')
 def settings(request):
     summary = False
     user = request.user
@@ -171,6 +224,7 @@ def settings(request):
         "user_information": user_information,
     })
 
+@login_required(login_url='/accounts/login/')
 def user_information(request):
     user = request.user
     if request.method == "POST":
@@ -216,6 +270,7 @@ def user_information(request):
                                                                       "profile_picture": profile_picture, 
                                                                       "date_of_birth": date_of_birth})
 
+@login_required(login_url='/accounts/login/')
 def summary_settings(request):
     summary = Summary.objects.get(user=request.user)
     if request.method == "POST":
@@ -260,6 +315,7 @@ def summary_settings(request):
                                                      "something_to_add": something_to_add,
                                                     })
 
+@login_required(login_url='/accounts/login/')
 def change_password(request):
     username = request.user.username
     if request.method == "POST":
@@ -273,6 +329,7 @@ def change_password(request):
         return redirect("settings")
     return render(request, "change_password.html")
 
+@login_required(login_url='/accounts/login/')
 def additionaly(request):
     if not request.user.is_superuser:
         try:

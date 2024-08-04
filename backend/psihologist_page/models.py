@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class Summary(models.Model):
@@ -36,3 +36,17 @@ class SummaryDescription(models.Model):
 
     def __str__(self):
         return self.inspector.username
+
+class SubscribesPrice(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    per_session = models.IntegerField()
+
+    def __str__(self) -> str:
+        return self.user.username
+
+class FreePlaces(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    free_places = models.CharField(max_length=4700)
+
+    def __str__(self):
+        return self.user.username

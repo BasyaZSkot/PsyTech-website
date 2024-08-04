@@ -9,6 +9,8 @@ urlpatterns = [
     path('settings/summary', views.summary_settings, name="summary_settings"),
     path('settings/change_password/', views.change_password, name="change_password"),
     path('additionaly-info/', views.additionaly, name='additionaly'),
+    path("pay/<str:subscribe_time>", views.pay, name="pay"),
+    path("choose_session_date/", views.choose_session_date, name="choose_session_date")
     ]
 
 

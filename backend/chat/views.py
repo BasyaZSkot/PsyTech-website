@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Message, Chat
 from psihologist_page.models import Summary
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 def mark_as_read(request, pk):
@@ -31,6 +32,7 @@ def mark_as_read(request, pk):
 #                                          "recipient": recipient,
 #                                          })
 
+
 def save(request):
     if request.method == 'POST':
         message_id = request.POST.get('model_id')
@@ -46,7 +48,7 @@ def save(request):
     else:
         return redirect("home")
 
-
+@login_required(login_url='/accounts/login/')
 def MessageView(request, chat_name):
     chat = Chat.objects.get(chat_name=chat_name)
     if request.user in chat.members.all():

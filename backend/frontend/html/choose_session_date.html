@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Calendar Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        #calendar {
+            text-align: center;
+        }
+
+        #monthYear {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 14.28%;
+            cursor: pointer;
+            position: relative;
+        }
+
+        td.selected {
+            background-color: #ff0;
+        }
+
+        .time-input {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            z-index: 10;
+            width: 200px;
+        }
+
+        .time-input .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ccc;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        form {
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        button[type="submit"] {
+            margin-top: 10px;
+        }
+
+        .selected-time {
+            display: flex;
+            flex-direction: column;
+            margin-top: 5px;
+        }
+
+        .selected-time .time-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .selected-time .time-entry span {
+            margin-right: 10px;
+        }
+
+        .selected-time .time-entry button {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="calendar">
+        <button id="prevMonth">←</button>
+        <div id="monthYear"></div>
+        <button id="nextMonth">→</button>
+        <form id="form">
+            {% csrf_token %}
+            <table id="calendarTable">
+                <thead>
+                    <tr>
+                        <th>Sun</th>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <input type="hidden" name="selected_dates" id="selected_dates">
+            <button type="submit">Save Selected Dates</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const calendar = document.getElementById('calendarTable').querySelector('tbody');
+            const monthYear = document.getElementById('monthYear');
+            const prevMonthBtn = document.getElementById('prevMonth');
+            const nextMonthBtn = document.getElementById('nextMonth');
+            const selectedDatesInput = document.getElementById('selected_dates');
+            const form = document.getElementById("form")
+
+            let today = new Date();
+            let currentMonth = today.getMonth();
+            let currentYear = today.getFullYear();
+            let selectedDates = {};
+
+            function generateCalendar(month, year) {
+                calendar.innerHTML = '';
+                monthYear.textContent = `${new Date(year, month).toLocaleString('default', { month: 'long' })} ${year}`;
+
+                let firstDay = new Date(year, month).getDay();
+                let daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                let row = document.createElement('tr');
+
+                for (let i = 0; i < firstDay; i++) {
+                    let cell = document.createElement('td');
+                    row.appendChild(cell);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    if (row.children.length === 7) {
+                        calendar.appendChild(row);
+                        row = document.createElement('tr');
+                    }
+
+                    let cell = document.createElement('td');
+                    cell.textContent = day;
+                    cell.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                    let timeInputButton = document.createElement('button');
+                    timeInputButton.textContent = '⏰';
+                    timeInputButton.style.position = 'absolute';
+                    timeInputButton.style.bottom = '0px';
+                    timeInputButton.style.right = '0px';
+                    timeInputButton.style.background = "none";
+                    timeInputButton.style.border = "none";
+                    timeInputButton.type = "button";
+                    cell.appendChild(timeInputButton);
+
+                    let timeInput = document.createElement('div');
+                    timeInput.className = 'time-input';
+
+                    let closeButton = document.createElement('button');
+                    closeButton.className = 'close-btn';
+                    closeButton.textContent = '✖';
+                    closeButton.type = 'button';
+                    closeButton.addEventListener('click', () => {
+                        timeInput.style.display = 'none';
+                    });
+                    timeInput.appendChild(closeButton);
+
+                    let timeInputField = document.createElement('input');
+                    timeInputField.type = 'time';
+                    timeInput.appendChild(timeInputField);
+
+                    let addTimeButton = document.createElement('button');
+                    addTimeButton.type = 'button';
+                    addTimeButton.textContent = 'Add Time';
+                    addTimeButton.addEventListener('click', () => {
+                        const timeValue = timeInputField.value;
+                        if (timeValue) {
+                            const timeEntryContainer = cell.querySelector('.selected-time');
+                            if (!selectedDates[cell.dataset.date]) {
+                                selectedDates[cell.dataset.date] = [];
+                            }
+                            if (!selectedDates[cell.dataset.date].includes(timeValue)) {
+                                selectedDates[cell.dataset.date].push(timeValue);
+
+                                const timeEntry = document.createElement('div');
+                                timeEntry.className = 'time-entry';
+                                timeEntry.innerHTML = `
+                                    <span>${timeValue}</span>
+                                    <button type="button">Edit</button>
+                                    <button type="button">Delete</button>
+                                `;
+
+                                timeEntry.querySelector('button').addEventListener('click', () => {
+                                    timeInputField.value = timeValue;
+                                    timeInput.style.display = 'block';
+                                    timeEntry.remove();
+                                    const date = cell.dataset.date;
+                                    const timeIndex = selectedDates[date].indexOf(timeValue);
+                                    if (timeIndex > -1) {
+                                        selectedDates[date].splice(timeIndex, 1);
+                                        if (selectedDates[date].length === 0) {
+                                            delete selectedDates[date];
+                                            cell.classList.remove('selected');
+                                        }
+                                        selectedDatesInput.value = JSON.stringify(selectedDates);
+                                    }
+                                });
+
+                                timeEntry.querySelectorAll('button')[1].addEventListener('click', () => {
+                                    timeEntry.remove();
+                                    const date = cell.dataset.date;
+                                    const timeIndex = selectedDates[date].indexOf(timeValue);
+                                    if (timeIndex > -1) {
+                                        selectedDates[date].splice(timeIndex, 1);
+                                        if (selectedDates[date].length === 0) {
+                                            delete selectedDates[date];
+                                            cell.classList.remove('selected');
+                                        }
+                                        selectedDatesInput.value = JSON.stringify(selectedDates);
+                                    }
+                                });
+
+                                timeEntryContainer.appendChild(timeEntry);
+                            }
+
+                            cell.classList.add('selected');
+                            timeInputField.value = '';  // Clear input field after adding
+                            selectedDatesInput.value = JSON.stringify(selectedDates);
+                            timeInput.style.display = 'none'; // Close time input after adding time
+                        }
+                    });
+                    timeInput.appendChild(addTimeButton);
+
+                    cell.appendChild(timeInput);
+
+                    timeInputButton.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        timeInput.style.display = 'block';
+                    });
+
+                    let selectedTimeContainer = document.createElement('div');
+                    selectedTimeContainer.className = 'selected-time';
+                    cell.appendChild(selectedTimeContainer);
+
+                    row.appendChild(cell);
+                }
+
+                while (row.children.length < 7) {
+                    let cell = document.createElement('td');
+                    row.appendChild(cell);
+                }
+
+                calendar.appendChild(row);
+            }
+
+            prevMonthBtn.addEventListener('click', () => {
+                if (currentMonth === 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                } else {
+                    currentMonth--;
+                }
+                generateCalendar(currentMonth, currentYear);
+            });
+
+            nextMonthBtn.addEventListener('click', () => {
+                if (currentMonth === 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                } else {
+                    currentMonth++;
+                }
+                generateCalendar(currentMonth, currentYear);
+            });
+
+            generateCalendar(currentMonth, currentYear);
+        });
+    </script>
+</body>
+</html>
