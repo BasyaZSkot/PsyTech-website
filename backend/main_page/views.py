@@ -19,23 +19,6 @@ import json
 
 
 @login_required(login_url='/accounts/login/')
-def choose_session_date(request):
-    if request.method == "POST":
-        sessions_date = json.loads(request.POST.get("selected_dates"))
-        lists = []
-        if type(sessions_date) != list:
-            for i, l in sessions_date.items():
-                _ = i.split("-")
-                for q in l:
-                    o = q.split(':')
-                    lists.append([_, o])
-            FreePlaces.objects.create(user=request.user, free_places=json.dumps(lists))
-
-    free_places = FreePlaces.objects.filter(user=request.user)
-    print(free_places)
-    return render(request, "choose_session_date.html")
-
-@login_required(login_url='/accounts/login/')
 def pay(request, subscribe_time):
     duration = SUBSCRIBE_PRICE[subscribe_time]["duration"]
     if duration != 0:
@@ -91,6 +74,28 @@ def psihologyst(request, notifications, notif_copy):
     my_summary = Summary.objects.get(user=request.user)
     notif_copy['my_summary'] = my_summary
     notifications['my_summary'] = my_summary
+    messages = SystemMessages.objects.filter(recipient=request.user)
+    delete_session_date = []
+    change_session_date = []
+    new_session_date = []
+    senders = {}
+    session_chats = []
+    for i in messages:
+        try:
+            for l, j in json.loads(i.content)[0].items():
+                if l=="delete":
+                    delete_session_date.append(j)
+                elif l=="change":
+                    change_session_date.append(j)
+                    chat = [_ for _ in Chat.objects.all() if (request.user in _.members.all() and i.sender in _.members.all())][0]
+                    session_chats.append([j, chat])
+                elif l=="new":
+                    new_session_date.append(j)
+                    chat = [i for i in Chat.objects.all() if (request.user in i.members.all() and __object.sender in i.members.all())][0]
+                    session_chats.append([j, chat])
+                senders[j] = i.sender
+        except:
+            pass
 
     try:
         __object = SystemMessages.objects.get(recipient=request.user, content="summary rejection", read_status=False)
@@ -120,13 +125,11 @@ def psihologyst(request, notifications, notif_copy):
         except:
             pass
 
-
-    return notif_copy, chats, no_chats, chat_first_messages, recipient, notifications
+    return session_chats, senders, notif_copy, chats, no_chats, chat_first_messages, recipient, notifications, delete_session_date, change_session_date, new_session_date
 
 
 def home_page(request):
     notifications = {'summaries': [],
-                     'meeting_messages': [],
                      'user_group': '',
                      'summary_confirmation': None,
                      'my_summary': '',
@@ -140,6 +143,12 @@ def home_page(request):
     no_chats = None
     chat_first_messages = None
     group = None
+    subscribe = None
+    delete_session_date = None
+    change_session_date = None
+    new_session_date = None
+    senders = None
+    session_chats = None
     if request.user.is_authenticated:
         try:
             subscribe = Subscribe.objects.get(user=request.user)
@@ -159,21 +168,12 @@ def home_page(request):
         if request.user.is_superuser:
             chats, no_chats, chat_first_messages, recipient, notifications = superuser(request, notifications)
 
-
         elif group_validation(request.user, "regular user"):
             pass
-        #     meeting_messages = Message.objects.filter(recipient=request.user, content='confirm meeting', read_status=False)
-        #     for message in meeting_messages:
-        #         notifications["meeting_messages"].append(message)
 
-
-        else:
+        if group_validation(request.user, "confirm psihologist") or group_validation(request.user, "reject psihologist") or group_validation(request.user, "psihologist"):
             group = "psih"
-            notif_copy, chats, no_chats, chat_first_messages, recipient, notifications = psihologyst(request, notifications, notif_copy)
-
-            # for message in meeting_messages:
-            #     notifications["meeting_messages"].append(message)
-
+            session_chats, senders, notif_copy, chats, no_chats, chat_first_messages, recipient, notifications, delete_session_date, change_session_date, new_session_date = psihologyst(request, notifications, notif_copy)
         if notif_copy == notifications:
             notifications["no_notif"] = True
 
@@ -182,7 +182,7 @@ def home_page(request):
     for psih in psihologysts:
         psihologysts_info.append(UserInformation.objects.get(user=psih))
     prices_for_subscribe = SUBSCRIBE_PRICE
-
+    
     return render(request, "index.html", context={"notifications": notifications,
                                                   "psihologysts_info": psihologysts_info,
                                                   "chats": chats,
@@ -194,7 +194,12 @@ def home_page(request):
                                                   "recipient": recipient,
                                                   "subscribes": prices_for_subscribe,
                                                   "group": group,
-                                                  "subscribe": subscribe
+                                                  "subscribe": subscribe,
+                                                  "delete_session_date":delete_session_date,
+                                                  "change_session_date":change_session_date,
+                                                  "new_session_date":new_session_date,
+                                                  "senders": senders,
+                                                  "session_chats": session_chats
                                                   })
 
 

@@ -100,7 +100,7 @@
         <button id="prevMonth">←</button>
         <div id="monthYear"></div>
         <button id="nextMonth">→</button>
-        <form id="form">
+        <form id="form" method="post">
             {% csrf_token %}
             <table id="calendarTable">
                 <thead>

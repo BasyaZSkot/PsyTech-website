@@ -27,27 +27,49 @@
                     {%  if notifications.no_notif %}
                         <h1 class="error_message">No message yet</h1>
                     {% else %}
-                        <ul>
+                        <ul class="summary">
                             {% for object in notifications.summaries %}
-                                <li id="unread" class="content">User {{ object.sender.username }} send <a href="{% url 'summaries_view' object.id %}">a summary</a></li>
+                                <li id="unread" class="content">User {{ object.user.username }} send <a href="{% url 'summaries_view' object.id %}">a summary</a></li>
                             {% endfor %}
                         </ul>
-                        <ul>
+                        <ul class="confirmation/rejection summary">
                             {% if notifications.summary_confirmation %}
                                 <li id="unread" class="content">You are suitable for us, the final decision will be made during the call. You can arrange a call via <a href="{% url 'chat' notifications.my_summary.id %}">chat</a></li>
                             {% elif notifications.summary_confirmation is False  %}  
                                 <li id="unread" class="content">Sorry, but you are not suitable for us. <a href="{% url 'summary_mistakes_view' notifications.reject_message.id %}">Click to see your mistakes or flaws</a></li>
                             {% endif %}
                         </ul>
-                        <ul>
-                            {% for object in notifications.meeting_messages %}
-                                {% if 'notifications.user_group=="regular user"'  %}
-                                    <li d="unread" class="content">Psihologyst {{ object.sender.username }} can meet you. You can agree with him/her in <a href="{% url 'chat' object.id %}">chat</a></li>
-                                {% elif 'notifications.user_group =="confirm psihologyst"' %}
-                                    <li d="unread" class="content">User {{ object.sender.username }} want to meet with you.</li> <!-- Link to confirm/reject request -->
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
+                        <div class="sessions-messages">
+                            <ul class="delete-session">
+                                {% for i in delete_session_date %}
+                                    <li class="content">
+                                        User {{sender.i}} canseled a session in {{i.0.2}} -{{i.0.1}}-{{i.0.0}} at {{i.1.0}}: {{i.1.1}} 
+                                    </li>{% endfor %}</ul>
+                            <ul class="change-session">
+                                {% for i in change_session_date %}
+                                    <li class="content">
+                                        User {{sender.i}} change date of a session in {{i.0.2}}-{{i.0.1}}-{{i.0.0}} at {{i.1.0}}: {{i.1.1}}. You can reagrue with him via 
+                                        {% for l in session_chats %}
+                                            {%if 'l.0==i' %}
+                                                <a href="{% url 'chat' l.1.chat_name %}">chat</a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <ul class="new-session">
+                                {% for i in new_session_date %}
+                                    <li class="content">
+                                        User {{sender.i}} set in {{i.0.2}}-{{i.0.1}}-{{i.0.0}} at {{i.1.0}}: {{i.1.1}}. You can agrue with him via 
+                                        {% for l in session_chats %}
+                                            {%if 'l.0==i' %}
+                                                <a href="{% url 'chat' l.1.chat_name %}">chat</a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -102,7 +124,8 @@
         {% endfor %}
         </ul>
     </div>
-    {% if subscribe is None and group is not "psih" %}
+    {% if subscribe is None %}
+    {% if group is not "psih" %}
     <div class="subscribes">
         <ul>
             {% for time, sub_info in subscribes.items %}
@@ -118,6 +141,7 @@
             {% endfor %}
         </ul>
     </div>
+    {% endif %}
     {% endif %}
     <script>
         const bar = document.getElementById("settingsBar");

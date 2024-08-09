@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Календарь</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .calendar {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #monthYear {
+            font-size: 1.2em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            width: 14.28%;
+            text-align: center;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #f7f7f7;
+        }
+
+        td {
+            cursor: pointer;
+        }
+
+        td:hover {
+            background-color: #e6e6e6;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #infoPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .popup-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .popup-close {
+            align-self: flex-end;
+            cursor: pointer;
+        }
+
+        #selectedDateInfo {
+            margin-top: 20px;
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .highlight {
+            background-color: yellow;
+        }
+
+        .choosen-before {
+            background-color: green;
+        }
+
+        .time-entry {
+            cursor: pointer;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar">
+        <div class="header">
+            <button id="prevMonth">&lt;</button>
+            <span id="monthYear"></span>
+            <button id="nextMonth">&gt;</button>
+        </div>
+        <table id="calendarTable">
+            <thead>
+                <tr>
+                    <th>Пн</th>
+                    <th>Вт</th>
+                    <th>Ср</th>
+                    <th>Чт</th>
+                    <th>Пт</th>
+                    <th>Сб</th>
+                    <th>Вс</th>
+                </tr>
+            </thead>
+            <tbody id="calendarBody">
+                <!-- Дни месяца будут вставляться здесь -->
+            </tbody>
+        </table>
+    </div>
+    <div id="infoPopup" class="hidden">
+        <div class="popup-content">
+            <span id="popupClose" class="popup-close">&times;</span>
+            <div id="timeList">
+                <!-- Список времени будет вставляться здесь -->
+            </div>
+        </div>
+    </div>
+    <form method="post">    
+        {% csrf_token %}
+        <input type="text" name="dates"  id="selectedDateInfo" readonly>
+        <button type="submit">Submit</button>
+    </form>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const monthNames = [
+                "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+                "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+            ];
+
+            let currentDate = new Date();
+            var highlightedDates = {};
+            const timeData = JSON.parse(`{{free_dates}}`);
+            const choosenDates = JSON.parse(`{{sess_dates}}`);
+            const prevMonthButton = document.getElementById("prevMonth");
+            const nextMonthButton = document.getElementById("nextMonth");
+            const monthYearDisplay = document.getElementById("monthYear");
+            const calendarBody = document.getElementById("calendarBody");
+            const infoPopup = document.getElementById("infoPopup");
+            const popupClose = document.getElementById("popupClose");
+            const timeList = document.getElementById("timeList");
+            const selectedDateInfo = document.getElementById("selectedDateInfo");
+
+            prevMonthButton.addEventListener("click", () => changeMonth(-1));
+            nextMonthButton.addEventListener("click", () => changeMonth(1));
+            popupClose.addEventListener("click", () => infoPopup.classList.add("hidden"));
+
+            function changeMonth(offset) {
+                currentDate.setMonth(currentDate.getMonth() + offset);
+                renderCalendar();
+            }
+
+            function renderCalendar() {
+                var year = currentDate.getFullYear();
+                var month = currentDate.getMonth();
+
+                monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
+                const lastDayOfLastMonth = new Date(year, month, 0).getDate();
+
+                calendarBody.innerHTML = "";
+
+                let row = document.createElement("tr");
+                var day = 1;
+                let nextMonthDay = 1;
+
+                for (let i = 0; i < 7; i++) {
+                    const cell = document.createElement("td");
+                    if (i < firstDayOfMonth - 1) {
+                        cell.textContent = lastDayOfLastMonth - (firstDayOfMonth - 2 - i);
+                        cell.classList.add("not-current-month");
+                    } else {
+                        cell.textContent = day++;
+                        const key = `${year}-${month}-${cell.textContent}`;
+                        if (highlightedDates[key]) {
+                            cell.classList.add("highlight");
+                        }
+                        cell.addEventListener("click", () => showInfo(cell, year, month, cell.textContent));
+                    }
+                    row.appendChild(cell);
+                }
+                calendarBody.appendChild(row);
+
+                while (day <= lastDateOfMonth) {
+                    row = document.createElement("tr");
+                    for (let i = 0; i < 7; i++) {
+                        const cell = document.createElement("td");
+                        if (day <= lastDateOfMonth) {
+                            cell.textContent = day++;
+                            const key = `${year}-${month}-${cell.textContent}`;
+                            if (highlightedDates[key]) {
+                                cell.classList.add("highlight");
+                            }
+                            cell.addEventListener("click", () => showInfo(cell, year, month, cell.textContent));
+                        } else {
+                            cell.textContent = nextMonthDay++;
+                            cell.classList.add("not-current-month");
+                        }
+                        row.appendChild(cell);
+                    }
+                    calendarBody.appendChild(row);
+                }
+            }
+            
+
+            function showInfo(cell, year, month, day) {
+                const key = `${year}-${month + 1}-${day}`;
+                var currentInfo = []
+                var choosenBefore = []
+                timeData.forEach(date => {
+                    if (date[0][0] === year && date[0][1]===month+1 && date[0][2] === parseInt(day)) {
+                        currentInfo.push(date[1])
+                    }  
+                })
+                choosenDates.forEach(date => {
+                    if (date[0][0] === year && date[0][1]===month+1 && date[0][2] === parseInt(day)) {
+                        choosenBefore.push(date[1])
+                    }
+                })
+                timeList.innerHTML = "";
+                if (choosenBefore.length == 0 & currentInfo.length == 0) {
+                    timeList.textContent = "Нет информации о времени";
+                } else{ 
+                    if (currentInfo.length > 0) {
+                        currentInfo.forEach(info => {
+                            const timeEntry = document.createElement("div");
+                            timeEntry.textContent = `${info[0]}:${info[1].toString().padStart(2, '0')}`;
+                            timeEntry.classList.add("time-entry");
+                            timeEntry.addEventListener("click", () => {
+                                timeEntry.classList.toggle("highlight");
+                                if (highlightedDates[key]) {
+                                    if (highlightedDates[key].includes(timeEntry.textContent)) {
+                                        highlightedDates[key] = highlightedDates[key].filter(t => t !== timeEntry.textContent);
+                                        if (highlightedDates[key].length === 0) {
+                                            delete highlightedDates[key];
+                                        }
+                                    } else {
+                                        highlightedDates[key].push(timeEntry.textContent);
+                                    }
+                                } else {
+                                    highlightedDates[key] = [timeEntry.textContent];
+                                }
+                                updateSelectedDateInfo();
+                            });
+                            if (highlightedDates[key] && highlightedDates[key].includes(timeEntry.textContent)) {
+                                timeEntry.classList.add("highlight");
+                            }
+                            timeList.appendChild(timeEntry);
+                        });
+                    } 
+                    if (choosenBefore.length > 0 ) {
+                        choosenBefore.forEach(info => {
+                            highlightedDates[key] = [`${info[0]}:${info[1].toString().padStart(2, '0')}`];
+                            const timeEntry = document.createElement("div");
+                            timeEntry.id = key + " " + info[0] + ":" + info[1].toString().padStart(2, '0')
+                            timeEntry.textContent = `${info[0]}: ${info[1].toString().padStart(2, '0')}`;
+                            timeEntry.classList.add("time-entry");
+                            timeEntry.classList.toggle("choosen-before");
+                            const list = JSON.stringify([timeEntry.id.toString(), info, year, month, day, choosenDates, choosenBefore, highlightedDates])
+                            timeEntry.setAttribute("onclick", `clickListener(${list});`)
+
+                            timeList.appendChild(timeEntry);
+                        });
+                        updateSelectedDateInfo()
+
+                    }
+                }
+                
+                
+                infoPopup.classList.remove("hidden");
+            }
+
+            renderCalendar();
+            function updateSelectedDateInfo(highlightedDates_2) {
+                if (highlightedDates_2){
+                    highlightedDates = highlightedDates_2
+                }
+                selectedDateInfo.value = JSON.stringify(highlightedDates);
+            }
+        });
+        function updateSelectedDateInfo(highlightedDates_2) {
+                highlightedDates = highlightedDates_2
+                selectedDateInfo.value = JSON.stringify(highlightedDates);
+            }
+
+        function clickListener(info){
+            timeEntry = document.getElementById(info[0])
+            timeEntry.className = "time-entry";
+            info[5].splice([[info[2], info[3]+1, info[4]], info[1]])
+            info[6].splice(info[1])
+            timeEntry.removeAttribute("onclick")
+            const highlightedDates = info[7]
+            const key = `${info[2]}-${info[3]+1}-${info[4]}`
+            highlightedDates[key].splice(info[1][0].toString()+":"+info[1][1].toString().padStart(2, "0"))
+            updateSelectedDateInfo(highlightedDates);
+            timeEntry.addEventListener("click", () => {
+                timeEntry.classList.toggle("highlight");
+                if (highlightedDates[key]) {
+                    if (highlightedDates[key].includes(timeEntry.textContent)) {
+                        highlightedDates[key] = highlightedDates[key].filter(t => t !== timeEntry.textContent);
+                        if (highlightedDates[key].length === 0) {
+                            delete highlightedDates[key];
+                        }
+                    } else {
+                        highlightedDates[key].push(timeEntry.textContent);
+                    }
+                } else {
+                    highlightedDates[key] = [timeEntry.textContent];
+                }
+                updateSelectedDateInfo(highlightedDates);
+            });
+            }
+    </script>
+</body>
+</html>

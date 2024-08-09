@@ -11,5 +11,7 @@ urlpatterns = [
     path('<int:pk>/confirm/', views.confirm_summary, name="confirm_summary"),
     path('summary_mistakes/<int:pk>', views.summary_mistakes, name='summary_mistakes'),
     path('summary_mistakes_view/<int:pk>', views.summary_description_detail_view, name="summary_mistakes_view"),
-    path('add-subscribe/', views.subscribe, name="add-subscribe")
+    path('add-subscribe/', views.subscribe, name="add-subscribe"),
+    path("choose_work_date/", views.choose_work_date, name="choose_work_date"),
+    path("choose_sessions_date/<int:psih_id>", views.choose_sessions_date, name="choose_sessions_date"),
 ]

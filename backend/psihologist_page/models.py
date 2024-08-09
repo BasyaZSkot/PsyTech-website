@@ -50,3 +50,10 @@ class FreePlaces(models.Model):
 
     def __str__(self):
         return self.user.username
+    
+class SessionsDate(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    dates = models.CharField(max_length=4700)
+
+    def __str__(self):
+        return self.user.username
