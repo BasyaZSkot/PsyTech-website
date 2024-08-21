@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-import datetime
 
 
 class SystemMessages(models.Model):
@@ -18,6 +17,9 @@ class UserInformation(models.Model):
     specialyty = models.CharField(max_length=100, choices=(("regular user", "REGULAR USER"), ("psihologist", "PSIHOLOGYST")), default=("regular user"))
     date_of_birth = models.DateField()
     profile_picture = models.FileField(upload_to="images/")
+    expirience = models.CharField(max_length=3, choices=(("yes", "YES"), ("no", "NO")))
+    time_zone = models.CharField(max_length=100)
+    about = models.CharField(max_length=255)
     
     def __str__(self):
         return self.user.username

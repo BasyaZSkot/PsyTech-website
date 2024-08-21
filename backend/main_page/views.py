@@ -14,8 +14,9 @@ from .forms import UserInformationForm
 from backend.settings import SUBSCRIBE_PRICE
 
 import copy
-from datetime import timedelta, datetime
+from datetime import timedelta
 import json
+import time
 
 
 @login_required(login_url='/accounts/login/')
@@ -162,18 +163,15 @@ def home_page(request):
 
             if user_info.profile_picture:
                 no_image = False
-            notifications['user_group'] = list(request.user .groups.values_list("name", flat=True))[0]        
+            notifications['user_group'] = list(request.user .groups.values_list("name", flat=True))[0]    
         notif_copy = copy.deepcopy(notifications)
-
         if request.user.is_superuser:
             chats, no_chats, chat_first_messages, recipient, notifications = superuser(request, notifications)
 
-        elif group_validation(request.user, "regular user"):
-            pass
-
-        if group_validation(request.user, "confirm psihologist") or group_validation(request.user, "reject psihologist") or group_validation(request.user, "psihologist"):
+        elif group_validation(request.user, "confirm psihologist") or group_validation(request.user, "reject psihologist") or group_validation(request.user, "psihologist"):
             group = "psih"
             session_chats, senders, notif_copy, chats, no_chats, chat_first_messages, recipient, notifications, delete_session_date, change_session_date, new_session_date = psihologyst(request, notifications, notif_copy)
+
         if notif_copy == notifications:
             notifications["no_notif"] = True
 
@@ -294,6 +292,7 @@ def summary_settings(request):
         summary.something_to_add = request.POST.get("something_to_add")
         summary.save()
         return redirect("home")
+    
     degree = summary.degree
     universyty = summary.universyty
     diploma = summary.diploma
@@ -306,6 +305,7 @@ def summary_settings(request):
     often_questions = summary.often_questions
     experience = summary.experience
     something_to_add = summary.something_to_add
+
     return render(request, "summary_set.html", context={"degree": degree,
                                                      "universyty": universyty,
                                                      "diploma": diploma,
@@ -348,12 +348,13 @@ def additionaly(request):
                     specialyty = form.cleaned_data["specialyty"]
                     form = form.save(commit=False)
                     form.user = request.user
+                    form.time_zone = time.timezone()
                     form.save()
                     my_group = Group.objects.get(name=specialyty) 
                     my_group.user_set.add(request.user)
 
                     if specialyty == "regular user":
-                        return redirect("home")
+                        return redirect("regular_user_additionaly")
                     elif specialyty == "psihologist":
                         return redirect("filling_summary")
             else:

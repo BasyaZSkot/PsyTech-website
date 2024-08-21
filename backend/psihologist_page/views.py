@@ -1,6 +1,7 @@
+from django.db.models.base import Model as Model
 from django.shortcuts import render, redirect
-from .models import Summary, SummaryDescription, FreePlaces, SessionsDate
-from .forms import SummaryForm, SummaryDescriptionForm, SubscribesForm
+from .models import Summary, SummaryDescription, FreePlaces, SessionsDate, Universyty
+from .forms import SummaryForm, SummaryDescriptionForm, SubscribesForm, UniversytyFormSet, PractiseForm
 from django.views import generic
 from main_page.models import SystemMessages
 from django.contrib.auth.models import Group
@@ -116,36 +117,31 @@ def choose_sessions_date(request, psih_id):
 @login_required(login_url='/accounts/login/')
 def getting_summary(request):
     if request.POST:
-        form = SummaryForm(request.POST, request.FILES)
-        if form.is_valid():
+        form = SummaryForm(request.POST)
+        form_ = UniversytyFormSet(request.POST, request.FILES)
+        form__ = PractiseForm(request.POST, request.POST)
+        if form.is_valid() and form_.is_valid() and form__.is_valid():
             form.clean()
-
-            model = Summary(user=request.user,
-                            degree=form.cleaned_data["degree"],
-                            universyty=form.cleaned_data["universyty"],
-                            diploma=form.cleaned_data["diploma"],
-                            training=form.cleaned_data["training"], 
-                            advanced_curses=form.cleaned_data["advanced_curses"], 
-                            description=form.cleaned_data["description"], 
-                            science_interestings=form.cleaned_data["science_interestings"], 
-                            achievements=form.cleaned_data["achievements"], 
-                            work_area=form.cleaned_data["work_area"], 
-                            often_questions=form.cleaned_data["often_questions"], 
-                            experience=form.cleaned_data["experience"], 
-                            something_to_add=form.cleaned_data["something_to_add"])
-            model.save()
-
+            c = form_
+            b = form__
+            form__.save()
+            form_.save()
+            a = Summary.objects.create(user=request.user, universyty=c, practise=b, advanced_study=form.cleaned_data["advanced_study"], additional_studing=form.cleaned_data["additional_studing"])
+            print(a)
             return redirect("add-subscribe")
     else:
         form = SummaryForm()
+        form_ = UniversytyFormSet(queryset=Universyty.objects.none())
     
-    return render(request, "psihologyst_form.html", context={'form':form})
+    return render(request, "psihologyst_form.html", context={'form':form,
+                                                             "form_":form_})
 
 
 class SummaryDetailView(generic.DetailView):
     model = Summary
     template_name = "summaries_view.html" 
     context_object_name = "summary"
+
 
 @login_required(login_url='/accounts/login/')
 def summary_mistakes(request, pk):
@@ -164,6 +160,7 @@ def summary_mistakes(request, pk):
 
     return render(request, 'summary_description.html', context={'form': form})
 
+
 @login_required(login_url='/accounts/login/')
 def reject_summary(request, pk):
     if request.user.is_superuser:
@@ -180,6 +177,7 @@ def reject_summary(request, pk):
         return redirect("home")
     else:
         return redirect("404")
+
 
 @login_required(login_url='/accounts/login/')   
 def confirm_summary(request, pk):
@@ -206,6 +204,7 @@ def summary_description_detail_view(request, pk):
 
     return render(request, "summary_mistakes_detail_view.html", context={"summary_description": SummaryDescription.objects.get(summary=summary)})
 
+
 @login_required(login_url='/accounts/login/')
 def subscribe(request):
     if request.method == "POST":
@@ -221,4 +220,35 @@ def subscribe(request):
     return render(request, "add_subscribe.html", context={
         "form": form,
         "threshold": 1000
+    })
+          
+
+@login_required(login_url='/accounts/login/')
+def psih_pers_acc(request):
+    user = request.user
+    free_dates = FreePlaces.objects.get(user=user)
+    taken_dates = [json.loads(i.dates) for i in SessionsDate.objects.filter(psih=user)][0]
+
+
+    next_session = [[99999, 13, 32], [24, 60]]
+    users = [i.user for i in SessionsDate.objects.filter(psih=user)]
+
+    if taken_dates == None:
+        next_session = ""
+    else:
+        for date in taken_dates:
+            if date[0][0]<=next_session[0][0]:
+                if date[0][1]<=next_session[0][1]:
+                    if date[0][2]<=next_session[0][1]:
+                        if date[1][0]<=next_session[1][0]:
+                            if date[1][1]<=next_session[1][1]:
+                                next_session = date
+        next_session_user = SessionsDate.objects.get(psih=user, dates=json.dumps(taken_dates)).user
+        
+    return render(request, "html_2.0//psychologist_dashboard.html", context={
+        "free_dates": json.loads(free_dates.free_places),
+        "taken_dates": taken_dates,
+        "next_session": next_session,
+        "users": users,
+        "next_session_user": next_session_user,
     })

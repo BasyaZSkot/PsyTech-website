@@ -14,4 +14,5 @@ urlpatterns = [
     path('add-subscribe/', views.subscribe, name="add-subscribe"),
     path("choose_work_date/", views.choose_work_date, name="choose_work_date"),
     path("choose_sessions_date/<int:psih_id>", views.choose_sessions_date, name="choose_sessions_date"),
+    path("pers_acc/", views.psih_pers_acc, name="psih_pes_acc")
 ]

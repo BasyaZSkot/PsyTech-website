@@ -1,28 +1,31 @@
-from typing import Any, Mapping
+from typing import Any, Sequence
 from django import forms
-from django.core.files.base import File
-from django.db.models.base import Model
-from django.forms.utils import ErrorList
-from .models import Summary, SummaryDescription, SubscribesPrice
+from .models import Summary, SummaryDescription, SubscribesPrice, Universyty, Practise
+
 class SummaryForm(forms.ModelForm):
-    username = forms.CharField(required=False)
-    something_to_add = forms.CharField(required=False)
     class Meta:
         model = Summary
-        fields = ("degree",
-                  "universyty",
-                  "diploma",
-                  "training",
-                  "advanced_curses",
-                  "description",
-                  "science_interestings",
-                  "achievements",
-                  "work_area",
-                  "often_questions",
-                  "experience",
-                  "something_to_add",
+        fields = ("advanced_study",
+                  "additional_studing",
+                  "expirience"
         )
 
+class UniversytyForm(forms.ModelForm):
+    class Meta:
+        model = Universyty
+        fields = ("end_year", "referal", "degree", "facs", "universyty", "diploma")
+
+class PractiseForm(forms.ModelForm):
+    class Meta:
+        model = Practise
+        fields = ("start_year", 
+                  "clients_count", 
+                  "online_expirience", 
+                  "self_terapy", 
+                  "supervisore_have", 
+                  "supervisore_recomindation", 
+                  "additional_work_studing", 
+                  "clients_count_on_platform")
 
 class SummaryDescriptionForm(forms.ModelForm):
     class Meta:
@@ -38,3 +41,5 @@ class SubscribesForm(forms.ModelForm):
         super(forms.ModelForm, self).__init__(*args, **kwargs)
         for f in self.fields:
             self.fields[f].help_text = None
+
+UniversytyFormSet = forms.modelformset_factory(Universyty, fields=("end_year", "referal", "degree", "facs", "universyty", "diploma"), form=UniversytyForm, extra=1)

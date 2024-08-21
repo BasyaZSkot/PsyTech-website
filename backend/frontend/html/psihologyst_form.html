@@ -1,15 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form }}
-        <button type="submit">Send summer</button>
-    </form>
-</body>
-</html>
+<form enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    {{ form }}
+    {{ form_.management_form }}
+    <div id="forms-container">
+        {% for a in form_ %}
+            <div class="form-row">
+                {{ a }}    
+                <button type="button" class="delete-form">x</button>
+            </div>
+        {% endfor %}
+    </div>
+    <button type="button" id="add-form">+</button>
+    <button type="submit">Submit</button>
+</form>
+
+<script>
+    document.getElementById('add-form').onclick = function() {
+        let totalForms = document.getElementById('id_form-TOTAL_FORMS');
+        let currentFormCount = parseInt(totalForms.value);
+        let newFormIndex = currentFormCount;
+        let emptyFormTemplate = document.getElementById('form-template').innerHTML.replace(/__prefix__/g, newFormIndex);
+
+        document.getElementById('forms-container').insertAdjacentHTML('beforeend', emptyFormTemplate);
+        totalForms.value = currentFormCount + 1;
+    };
+</script>
+
+<script type="text/template" id="form-template">
+    <div class="form-row">
+        {{ form_.empty_form.as_p|safe }}
+    </div>
+</script>

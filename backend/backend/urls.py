@@ -26,8 +26,9 @@ urlpatterns = [
     # path('reg/', include("registration_page.urls")),
     path('404/', views.error_404, name='404'),
     path('chat/', include("chat.urls")),
-    path('summary/', include("psihologist_page.urls")),
+    path('psih/', include("psihologist_page.urls")),
     path('accounts/', include("allauth.urls")),
+    path('regular-user/', include("client_page.urls")),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:
