@@ -28,7 +28,8 @@ urlpatterns = [
     path('chat/', include("chat.urls")),
     path('psih/', include("psihologist_page.urls")),
     path('accounts/', include("allauth.urls")),
-    path('regular-user/', include("client_page.urls")),
+    path('reg-user/', include("client_page.urls")),
+    path("__reload__/", include("django_browser_reload.urls")),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

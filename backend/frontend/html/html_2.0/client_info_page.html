@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Info - MindCare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-10">
+
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+        <!-- User Profile Section -->
+        <div class="flex items-center mb-8">
+            <img src="http://127.0.0.1:8000/files/{{client_info.profile_picture}}" class="w-32 h-32 rounded-full mr-6" alt="User's profile picture">
+            <div>
+                <h2 class="text-3xl font-semibold">{{ client.first_name }} {{ client.last_name }}</h2>
+            </div>
+        </div>
+
+        <!-- Basic Info Section -->
+        <div class="mb-8">
+            <h3 class="text-2xl font-semibold mb-4">Basic Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-gray-600 font-semibold">Email:</p>
+                    <p>{{ client.email }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-600 font-semibold">Phone:</p>
+                    <p>+1 (555) 123-4567</p>
+                </div>
+                {% for i, l in prefered_method_for_chatting.items %}
+                    {% if i != 'Web Site Chat' and i != 'Email' %}
+                    <div>
+                        <p class="text-gray-600 font-semibold">{{i}}:</p>
+                        <p>{{ l }}</p>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <div>
+                    <p class="text-gray-600 font-semibold">Date of Birth:</p>
+                    <p>{{ client_info.date_of_birth }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferences Section -->
+        <div class="mb-8">
+            <h3 class="text-2xl font-semibold mb-4">Preferences</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-gray-600 font-semibold">Current Psychologist:</p>
+                    {% if client_psih is not None %}
+                        <p>{{ client_psih.first_name }} {{ client_psih.last_name }}</p>
+                    {% else %}
+                        <p>Client doesn't have a psychologist right now.</p>
+                    {% endif %}
+                </div>
+                <div id="time-slots">
+                    <p class="text-gray-600 font-semibold">Preferred Time Slot:</p>
+                </div>
+                <div>
+                    <p class="text-gray-600 font-semibold">Prefered Messenger for Chatting:</p>
+                    {% for i, l in prefered_method_for_chatting.items %}
+                        {% if forloop.last is True %}
+                            <p style="display: inline;">{{i}}</p>
+                        {% else %}
+                            <p style="display: inline;">{{i}},</p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <br>
+                <div>
+                    <p class="text-gray-600 font-semibold">Notification Preferences:</p>
+                    <p>{{ client_problem_info.prefer_notif }}</p>
+                </div>
+            </div>
+            <br>
+            <div class="mb-8">
+                <h3 class="text-2xl font-semibold mb-4">Problems</h3>
+                <div>
+                    <p class="text-gray-600 font-semibold">Current Problems:</p>
+                    <p>{{ client_problem_info.problems|default_if_none:'No problems reported' }}</p>
+                    <br>
+                    <p class="text-gray-600 font-semibold">Comments:</p>
+                    <p>{{ client_problem_info.comment_ab_problem | default_if_none:'No comments available' }}</p>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    <script>
+        const tm_sl = JSON.parse('{{prefer_time_slots|safe}}')
+        function findAvailableSlots(schedule) {
+            const result = [];
+            let start = null;
+
+            for (let i = 0; i <= 23; i++) {
+                const key = String(i);
+                if (schedule[key] === "+") {
+                    if (start === null) {
+                        start = i; // Начало нового свободного промежутка
+                    }
+                } else if (start !== null) {
+                    // Конец текущего свободного промежутка
+                    result.push(formatTimeSlot(start, i - 1));
+                    start = null;
+                }
+            }
+
+            // Обработка последнего свободного промежутка, если он заканчивается в 23:50
+            if (start !== null) {
+                result.push(formatTimeSlot(start, 23));
+            }
+
+            return result;
+        }
+
+        // Функция форматирования времени
+        function formatTimeSlot(start, end) {
+            const startPeriod = convertTo12HourFormat(start);
+            const endPeriod = convertTo12HourFormat(end);
+            
+            // Устанавливаем временной интервал в нужном формате
+            return `${getTimeSlotName(start)} (${startPeriod}, ${endPeriod})`;
+        }
+
+        // Функция конвертации 24-часового времени в 12-часовой формат
+        function convertTo12HourFormat(hour) {
+            const period = hour < 12 || hour === 24 ? "AM" : "PM";
+            const adjustedHour = hour % 12 || 12; // Преобразование 0 в 12 для 12-часового формата
+            const minutes = hour === 24 ? "00" : "50";
+            return `${adjustedHour}:00 ${period} - ${adjustedHour}:${minutes} ${period}`;
+        }
+
+        // Функция для определения названия временного интервала
+        function getTimeSlotName(hour) {
+            if (hour >= 5 && hour < 12) return "Morning";
+            if (hour >= 12 && hour < 17) return "Afternoon";
+            if (hour >= 17 && hour < 21) return "Evening";
+            return "Night";
+        }
+
+        // Функция для создания элемента <p> и добавления его в документ
+        function displayAvailableSlots(slots) {
+            const container = document.getElementById("time-slots"); // Используем id "time-slots"
+            const p = document.createElement("p"); // Создание нового элемента <p>
+            p.textContent = slots.join(", "); // Запись всех временных промежутков через запятую
+            container.appendChild(p); // Добавление элемента <p> в контейнер
+        }
+
+        const availableSlots = findAvailableSlots(tm_sl); // Находим свободные промежутки
+        displayAvailableSlots(availableSlots); // Отображаем их на странице
+
+
+    </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 from django.contrib import admin
-from .models import UserPsihHelpInfo
+from .models import UserProblems_and_Preferences
 # Register your models here.
-admin.site.register(UserPsihHelpInfo)
+
+admin.site.register(UserProblems_and_Preferences)

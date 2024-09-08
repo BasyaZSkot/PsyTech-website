@@ -41,8 +41,10 @@ MEDIA_URL = '/files/'
 # Application definition
 SITE_ID = 1
 INSTALLED_APPS = [
+    # 'tailwind',
     'daphne',
     'channels',
+    'django_browser_reload',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,6 +57,7 @@ INSTALLED_APPS = [
     'main_page',
     'psihologist_page',
     'chat',
+    # 'theme',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -63,7 +66,16 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.yandex',
 ]
 
+# TAILWIND_APP_NAME = "theme"
+
+# NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
+
+# INTERNAL_IPS = [
+#     "127.0.0.1"
+# ]
+
 MIDDLEWARE = [
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -73,6 +85,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     #allauth
     "allauth.account.middleware.AccountMiddleware",
+    
 ]
 
 ROOT_URLCONF = 'backend.urls'
